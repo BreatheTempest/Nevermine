@@ -35,7 +35,7 @@
 		</style>
 	</head>
 	<body>
-		<title>Стенд FNAA miniGen</title>
+		<title>Nevermine</title>
 		<meta name="claude:viewport-fit-sides" content="cover" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -413,11 +413,11 @@
 							<span style="background: #d4bb86"></span
 							><span style="background: #85827b"></span
 							><span style="background: #5b4330"></span>
-							
 						</div>
 						<p class="note">
-							песок · щебень · грунт, в стальной раме с
-							прозрачным центральным стеклом 1,8 × 1,6 м и центральным окном без засыпки; песок, щебень и грунт находятся только в боковых колоннах.
+							песок · щебень · грунт, в стальной раме с прозрачным центральным
+							стеклом 1,8 × 1,6 м и центральным окном без засыпки; песок, щебень
+							и грунт находятся только в боковых колоннах.
 						</p>
 					</section>
 					<section>
@@ -491,18 +491,44 @@
 			}
 			// Shared finishes for both stand models, mapped by their authored material names.
 			const standFinishes = {
-				glass: new THREE.MeshPhysicalMaterial({name:'Stand frosted glass', color:0xf5f9fc, metalness:0, roughness:0.16, transmission:0.92, thickness:0.018, ior:1.45, side:THREE.DoubleSide}),
-				aluminum: new THREE.MeshStandardMaterial({name:'Stand aluminum', color:0xffffff, metalness:0.85, roughness:0.055}),
-				plastic: new THREE.MeshStandardMaterial({name:'Stand dark plastic', color:0x202226, metalness:0, roughness:0.72}),
+				glass: new THREE.MeshPhysicalMaterial({
+					name: 'Stand frosted glass',
+					color: 0xf5f9fc,
+					metalness: 0,
+					roughness: 0.16,
+					transmission: 0.92,
+					thickness: 0.018,
+					ior: 1.45,
+					side: THREE.DoubleSide,
+				}),
+				aluminum: new THREE.MeshStandardMaterial({
+					name: 'Stand aluminum',
+					color: 0xffffff,
+					metalness: 0.85,
+					roughness: 0.055,
+				}),
+				plastic: new THREE.MeshStandardMaterial({
+					name: 'Stand dark plastic',
+					color: 0x202226,
+					metalness: 0,
+					roughness: 0.72,
+				}),
 			};
-			function standFinish(material){
+			function standFinish(material) {
 				if (/glass/i.test(material.name)) return standFinishes.glass;
 				if (/metal/i.test(material.name)) return standFinishes.aluminum;
 				if (/plastic/i.test(material.name)) return standFinishes.plastic;
 				return material;
 			}
 			// Fit imported bounds without changing materials on the cached source model.
-			function projectModel(parent, file, size, center, rotationY = 0, materialTransform = null) {
+			function projectModel(
+				parent,
+				file,
+				size,
+				center,
+				rotationY = 0,
+				materialTransform = null,
+			) {
 				const fallback = [...parent.children];
 				const job = loadModel(file)
 					.then((gltf) => {
@@ -517,11 +543,12 @@
 						const wrapper = new THREE.Group();
 						wrapper.add(oriented);
 						if (typeof size === 'number') wrapper.scale.setScalar(size);
-						else wrapper.scale.set(
-							size[0] / extent.x,
-							size[1] / extent.y,
-							size[2] / extent.z,
-						);
+						else
+							wrapper.scale.set(
+								size[0] / extent.x,
+								size[1] / extent.y,
+								size[2] / extent.z,
+							);
 						wrapper.position
 							.copy(
 								bounds
@@ -533,10 +560,15 @@
 						model.traverse((node) => {
 							if (node.isMesh) {
 								if (/^stand_[23]_shelves\.glb$/.test(file)) {
-									node.material = Array.isArray(node.material) ? node.material.map(standFinish) : standFinish(node.material);
+									node.material = Array.isArray(node.material)
+										? node.material.map(standFinish)
+										: standFinish(node.material);
 								}
-								if (materialTransform) node.material = Array.isArray(node.material) ? node.material.map(materialTransform) : materialTransform(node.material);
-                                node.castShadow = node.material !== standFinishes.glass;
+								if (materialTransform)
+									node.material = Array.isArray(node.material)
+										? node.material.map(materialTransform)
+										: materialTransform(node.material);
+								node.castShadow = node.material !== standFinishes.glass;
 								node.receiveShadow = true;
 							}
 						});
@@ -866,68 +898,168 @@
 								12,
 							),
 						);
-						g.add(B(0.05, 0.035, 0.05, standFinishes.plastic, sx * ix, 0.105, sz * iz));
-						const wh = C(0.045, 0.03, standFinishes.plastic, sx * ix, 0.047, sz * iz, 20);
+						g.add(
+							B(
+								0.05,
+								0.035,
+								0.05,
+								standFinishes.plastic,
+								sx * ix,
+								0.105,
+								sz * iz,
+							),
+						);
+						const wh = C(
+							0.045,
+							0.03,
+							standFinishes.plastic,
+							sx * ix,
+							0.047,
+							sz * iz,
+							20,
+						);
 						wh.rotation.z = Math.PI / 2;
 						g.add(wh);
-						const hub = C(0.016, 0.034, standFinishes.aluminum, sx * ix, 0.047, sz * iz, 12);
+						const hub = C(
+							0.016,
+							0.034,
+							standFinishes.aluminum,
+							sx * ix,
+							0.047,
+							sz * iz,
+							12,
+						);
 						hub.rotation.z = Math.PI / 2;
 						g.add(hub);
 					}
 				for (const sx of [-1, 1])
 					g.add(
-						C(0.011, 0.2, standFinishes.aluminum, sx * w * 0.38, h + 0.1, d / 2 + 0.015, 10),
+						C(
+							0.011,
+							0.2,
+							standFinishes.aluminum,
+							sx * w * 0.38,
+							h + 0.1,
+							d / 2 + 0.015,
+							10,
+						),
 					);
-				g.add(B(w * 0.78, 0.022, 0.022, standFinishes.aluminum, 0, h + 0.2, d / 2 + 0.015));
+				g.add(
+					B(
+						w * 0.78,
+						0.022,
+						0.022,
+						standFinishes.aluminum,
+						0,
+						h + 0.2,
+						d / 2 + 0.015,
+					),
+				);
 				// Keep the GLB's authored proportions and use the same world scale as the tall stands.
-				projectModel(g, modelFile, STAND_SCALE, [0, 0.977209061384201 * STAND_SCALE / 2, 0], -2*Math.atan2(-0.07428741455078125, 0.997236967086792));
+				projectModel(
+					g,
+					modelFile,
+					STAND_SCALE,
+					[0, (0.977209061384201 * STAND_SCALE) / 2, 0],
+					-2 * Math.atan2(-0.07428741455078125, 0.997236967086792),
+				);
 				return g;
 			}
 
 			/* ---------- geometry of the setup ---------- */
 			const targetShelfY = 0.9716459214687347 * STAND_SCALE;
-            const TZ = -6.25,
+			const TZ = -6.25,
 				WZ = -5.6,
 				T = V(0, targetShelfY + 0.163, TZ);
 
-            /* Clear central viewing window with layered soil columns at the sides. */
-            const wallWidth = 1.8;
-            const glassHeight = 1.6;
-            const wall = new THREE.Group();
-            scene.add(wall);
-            const lmat = [sandTex, gravelTex, soilTex].map(t => M(0xffffff, 0.95, 0, {map:t}));
-            const LH = glassHeight / 3;
-            const sideColumnWidth = 0.25;
-            for(let i=0;i<3;i++) for(const side of [-1,1])
-                wall.add(B(sideColumnWidth,LH-0.002,0.35,lmat[i%3],side*(wallWidth-sideColumnWidth)/2,0.025+LH/2+i*LH,WZ));
-            const frameM = M(0x4c5660,0.45,0.6);
-            const frameX = wallWidth/2+0.02;
-            for(const sx of [-1,1]) for(const sz of [-1,1])
-                wall.add(B(0.04,glassHeight+0.07,0.04,frameM,sx*frameX,(glassHeight+0.07)/2,WZ+sz*0.195));
-            for(const y of [0.0125,glassHeight+0.04]) for(const sz of [-1,1])
-                wall.add(B(wallWidth+0.08,0.025,0.04,frameM,0,y,WZ+sz*0.195));
-            // +Z faces the equipment; no soil or backing obstructs the 1.3 m central window.
-            const wallGlass = new THREE.MeshPhysicalMaterial({
-                color:0xf0f8fc,metalness:0,roughness:0.08,transmission:0.94,
-                thickness:0.008,ior:1.45,side:THREE.DoubleSide
-            });
-            const frontPane = B(wallWidth,glassHeight,0.008,wallGlass,0,0.025+glassHeight/2,WZ+0.183);
-            frontPane.castShadow=false;wall.add(frontPane);
-            for(const sx of [-1,1]) wall.add(B(0.08,0.02,0.6,frameM,sx*frameX,0.01,WZ));
+			/* Clear central viewing window with layered soil columns at the sides. */
+			const wallWidth = 1.8;
+			const glassHeight = 1.6;
+			const wall = new THREE.Group();
+			scene.add(wall);
+			const lmat = [sandTex, gravelTex, soilTex].map((t) =>
+				M(0xffffff, 0.95, 0, { map: t }),
+			);
+			const LH = glassHeight / 3;
+			const sideColumnWidth = 0.25;
+			for (let i = 0; i < 3; i++)
+				for (const side of [-1, 1])
+					wall.add(
+						B(
+							sideColumnWidth,
+							LH - 0.002,
+							0.35,
+							lmat[i % 3],
+							(side * (wallWidth - sideColumnWidth)) / 2,
+							0.025 + LH / 2 + i * LH,
+							WZ,
+						),
+					);
+			const frameM = M(0x4c5660, 0.45, 0.6);
+			const frameX = wallWidth / 2 + 0.02;
+			for (const sx of [-1, 1])
+				for (const sz of [-1, 1])
+					wall.add(
+						B(
+							0.04,
+							glassHeight + 0.07,
+							0.04,
+							frameM,
+							sx * frameX,
+							(glassHeight + 0.07) / 2,
+							WZ + sz * 0.195,
+						),
+					);
+			for (const y of [0.0125, glassHeight + 0.04])
+				for (const sz of [-1, 1])
+					wall.add(
+						B(wallWidth + 0.08, 0.025, 0.04, frameM, 0, y, WZ + sz * 0.195),
+					);
+			// +Z faces the equipment; no soil or backing obstructs the 1.3 m central window.
+			const wallGlass = new THREE.MeshPhysicalMaterial({
+				color: 0xf0f8fc,
+				metalness: 0,
+				roughness: 0.08,
+				transmission: 0.94,
+				thickness: 0.008,
+				ior: 1.45,
+				side: THREE.DoubleSide,
+			});
+			const frontPane = B(
+				wallWidth,
+				glassHeight,
+				0.008,
+				wallGlass,
+				0,
+				0.025 + glassHeight / 2,
+				WZ + 0.183,
+			);
+			frontPane.castShadow = false;
+			wall.add(frontPane);
+			for (const sx of [-1, 1])
+				wall.add(B(0.08, 0.02, 0.6, frameM, sx * frameX, 0.01, WZ));
 
-            /* Targets on the top shelf, aligned with the clear viewing window. */
-            const targetStand = cart(0.88,0.88,0.9716459214687347*STAND_SCALE,'stand_2_shelves.glb');
-            targetStand.position.set(0,0,TZ);scene.add(targetStand);
-            const tray = new THREE.Group();scene.add(tray);
-            const Y0 = targetShelfY;
-            function uprightMine(group, originalCenter, x, radius) {
-                const pivot = new THREE.Group();
-                pivot.position.set(x,Y0+radius,TZ);
-                pivot.rotation.x = Math.PI/2; // Local +Y top face points toward equipment at +Z.
-                group.position.copy(originalCenter).negate();
-                pivot.add(group);tray.add(pivot);
-                return pivot;
-            }
+			/* Targets on the top shelf, aligned with the clear viewing window. */
+			const targetStand = cart(
+				0.88,
+				0.88,
+				0.9716459214687347 * STAND_SCALE,
+				'stand_2_shelves.glb',
+			);
+			targetStand.position.set(0, 0, TZ);
+			scene.add(targetStand);
+			const tray = new THREE.Group();
+			scene.add(tray);
+			const Y0 = targetShelfY;
+			function uprightMine(group, originalCenter, x, radius) {
+				const pivot = new THREE.Group();
+				pivot.position.set(x, Y0 + radius, TZ);
+				pivot.rotation.x = Math.PI / 2; // Local +Y top face points toward equipment at +Z.
+				group.position.copy(originalCenter).negate();
+				pivot.add(group);
+				tray.add(pivot);
+				return pivot;
+			}
 			// TM-62M
 			const mine = new THREE.Group();
 			tray.add(mine);
@@ -947,9 +1079,9 @@
 				[0.326, 0.142, 0.326],
 				[0, Y0 + 0.071, TZ],
 			);
-			uprightMine(mine,V(0,Y0+0.071,TZ),-0.18,0.163);
-            // PMN-2
-            const pmn = new THREE.Group();
+			uprightMine(mine, V(0, Y0 + 0.071, TZ), -0.18, 0.163);
+			// PMN-2
+			const pmn = new THREE.Group();
 			const pmnX = -0.33,
 				pmnZ = TZ + 0.18;
 			pmn.add(C(0.0605, 0.054, oliveP, pmnX, Y0 + 0.027, pmnZ, 32));
@@ -968,8 +1100,8 @@
 					pmnZ,
 				),
 			);
-			uprightMine(pmn,V(pmnX,Y0+0.031,pmnZ),0.15,0.0605);
-            // TNT 400 g blocks
+			uprightMine(pmn, V(pmnX, Y0 + 0.031, pmnZ), 0.15, 0.0605);
+			// TNT 400 g blocks
 			const tntM = M(0xc9a96a, 0.85, 0);
 			tray.add(
 				B(0.1, 0.05, 0.05, tntM, 0.33, Y0 + 0.025, TZ + 0.2),
@@ -993,11 +1125,20 @@
 			const generatorScale = 1;
 			const generatorHeight = 0.45434033847448757 * generatorScale;
 			// All equipment shares a 10 m floor-plan radius centered on the mine.
-            const targetDistance = 10;
-            const layoutDistanceScale = 0.675; // Compress spacing only; keep equipment proportions.
-            const GEN = { x: 0, z: TZ + targetDistance * layoutDistanceScale, w: 0.88, d: 0.88, h: 0.9716459214687347 * STAND_SCALE };
-			document.getElementById('wall-distance').textContent = [GEN.z-(WZ+0.175), GEN.z-(WZ-0.175)].map(d=>(d/layoutDistanceScale).toFixed(2).replace('.', ',')).join('–') + ' м от miniGen';
-            const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
+			const targetDistance = 10;
+			const layoutDistanceScale = 0.675; // Compress spacing only; keep equipment proportions.
+			const GEN = {
+				x: 0,
+				z: TZ + targetDistance * layoutDistanceScale,
+				w: 0.88,
+				d: 0.88,
+				h: 0.9716459214687347 * STAND_SCALE,
+			};
+			document.getElementById('wall-distance').textContent =
+				[GEN.z - (WZ + 0.175), GEN.z - (WZ - 0.175)]
+					.map((d) => (d / layoutDistanceScale).toFixed(2).replace('.', ','))
+					.join('–') + ' м от miniGen';
+			const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
 			genCart.position.set(GEN.x, 0, GEN.z);
 			scene.add(genCart);
 			genCart.add(
@@ -1024,18 +1165,17 @@
 					genPivot.add(CZ(0.014, 0.03, steel, sx * 0.025, -0.04, -0.142, 16));
 				genPivot.add(C(0.008, 0.015, red, 0.035, 0.109, -0.08, 12));
 			}
-			projectModel(
-				genPivot,
-				'minGen.glb',
-				generatorScale,
-				[0, 0, 0],
-				Math.PI,
-			);
+			projectModel(genPivot, 'minGen.glb', generatorScale, [0, 0, 0], Math.PI);
 			genPivot.rotation.y = Math.atan2(T.x - GEN.x, T.z - GEN.z);
 			scene.updateMatrixWorld(true);
-			const E = genPivot.localToWorld(V(0, -0.065 * generatorScale, 0.21 * generatorScale));
-			document.getElementById('emitter-height').textContent = E.y.toFixed(2).replace('.', ',') + ' м от пола';
-			const genBack = genPivot.localToWorld(V(0, -0.04 * generatorScale, -0.214 * generatorScale));
+			const E = genPivot.localToWorld(
+				V(0, -0.065 * generatorScale, 0.21 * generatorScale),
+			);
+			document.getElementById('emitter-height').textContent =
+				E.y.toFixed(2).replace('.', ',') + ' м от пола';
+			const genBack = genPivot.localToWorld(
+				V(0, -0.04 * generatorScale, -0.214 * generatorScale),
+			);
 
 			/* ---------- detector heads (built facing +Z) ---------- */
 			function headLaBr() {
@@ -1098,40 +1238,66 @@
 			const HEX = (n) => '#' + n.toString(16).padStart(6, '0');
 			// Shelf tops measured from stand_3_shelves.glb, relative to its lowest wheel.
 			// Target distance and lateral travel are independent measurements.
-            const lateralTravel = 5;
-            const standTargetDistance = targetDistance;
-            const detectorStandX = lateralTravel * layoutDistanceScale;
-            // Position each stand on the 10 m radius around the mines (floor-plan distance).
-            const detectorStandZ = TZ + Math.sqrt(standTargetDistance ** 2 - lateralTravel ** 2) * layoutDistanceScale;
-			const shelfHeights = [0.332713, 0.981970, 1.631227].map(y => y * STAND_SCALE);
+			const lateralTravel = 5;
+			const standTargetDistance = targetDistance;
+			const detectorStandX = lateralTravel * layoutDistanceScale;
+			// Position each stand on the 10 m radius around the mines (floor-plan distance).
+			const detectorStandZ =
+				TZ +
+				Math.sqrt(standTargetDistance ** 2 - lateralTravel ** 2) *
+					layoutDistanceScale;
+			const shelfHeights = [0.332713, 0.98197, 1.631227].map(
+				(y) => y * STAND_SCALE,
+			);
 			const detectorScale = 0.7;
-            const detectorShelfColors = [0x24b85a, 0x2879e8, 0x9b4de0]; // bottom, middle, top
-            function detectorFinish(color) {
-                const materials = new Map();
-                return original => {
-                    if (materials.has(original)) return materials.get(original);
-                    const material = original.clone();
-                    if (/LED/i.test(original.name)) {
-                        material.color.setHex(color);
-                        material.emissive.setHex(color);
-                        material.emissiveIntensity = 3;
-                    } else if (/Metal Color/i.test(original.name)) {
-                        material.color.setHex(color);
-                        material.metalness = 0.65;
-                        material.roughness = 0.25;
-                    }
-                    materials.set(original, material);
-                    return material;
-                };
-            }
+			const detectorShelfColors = [0x24b85a, 0x2879e8, 0x9b4de0]; // bottom, middle, top
+			function detectorFinish(color) {
+				const materials = new Map();
+				return (original) => {
+					if (materials.has(original)) return materials.get(original);
+					const material = original.clone();
+					if (/LED/i.test(original.name)) {
+						material.color.setHex(color);
+						material.emissive.setHex(color);
+						material.emissiveIntensity = 3;
+					} else if (/Metal Color/i.test(original.name)) {
+						material.color.setHex(color);
+						material.metalness = 0.65;
+						material.roughness = 0.25;
+					}
+					materials.set(original, material);
+					return material;
+				};
+			}
 			const detectorHeight = 0.56056505208835 * detectorScale;
 			const detectorDepth = 0.39439132809638977 * detectorScale;
 			for (const x of [-detectorStandX, detectorStandX]) {
 				const stand = new THREE.Group();
-				stand.position.set(x, 0, detectorStandZ);scene.add(stand);
-				for (const y of shelfHeights) stand.add(B(0.75, 0.025, 0.75, standFinishes.glass, 0, y-0.0125, 0));
-				for (const sx of [-1,1]) for (const sz of [-1,1]) stand.add(C(0.018, 1.63, standFinishes.aluminum, sx*0.36, 0.815, sz*0.36));
-				projectModel(stand, 'stand_3_shelves.glb', STAND_SCALE, [0, 0.8161577731370926 * STAND_SCALE, 0], -2*Math.atan2(0.9699319005012512, 0.24337689578533173));
+				stand.position.set(x, 0, detectorStandZ);
+				scene.add(stand);
+				for (const y of shelfHeights)
+					stand.add(
+						B(0.75, 0.025, 0.75, standFinishes.glass, 0, y - 0.0125, 0),
+					);
+				for (const sx of [-1, 1])
+					for (const sz of [-1, 1])
+						stand.add(
+							C(
+								0.018,
+								1.63,
+								standFinishes.aluminum,
+								sx * 0.36,
+								0.815,
+								sz * 0.36,
+							),
+						);
+				projectModel(
+					stand,
+					'stand_3_shelves.glb',
+					STAND_SCALE,
+					[0, 0.8161577731370926 * STAND_SCALE, 0],
+					-2 * Math.atan2(0.9699319005012512, 0.24337689578533173),
+				);
 			}
 			const DEV = [
 				{
@@ -1179,7 +1345,13 @@
 			];
 			DEV.forEach((D, i) => {
 				D.shelf = Math.floor(i / 2);
-				Object.assign(D, {x: (i % 2 ? 1 : -1) * detectorStandX, z: detectorStandZ, w: 0.82, d: 0.82, h: shelfHeights[D.shelf]});
+				Object.assign(D, {
+					x: (i % 2 ? 1 : -1) * detectorStandX,
+					z: detectorStandZ,
+					w: 0.82,
+					d: 0.82,
+					h: shelfHeights[D.shelf],
+				});
 			});
 			const CAB = {
 				sig: { c: 0xe8b923, name: 'Сигнал детектора → оцифровщик', y: 1.42 },
@@ -1203,14 +1375,31 @@
 
 			for (const D of DEV) {
 				const pivot = new THREE.Group();
-				pivot.position.set(D.x, D.h + detectorHeight/2, D.z);
+				pivot.position.set(D.x, D.h + detectorHeight / 2, D.z);
 				scene.add(pivot);
-				pivot.add(B(0.5605651140213013*detectorScale, detectorHeight, detectorDepth, alu, 0, 0, 0));
-				projectModel(pivot, 'detector.glb', detectorScale, [0,0,0], Math.PI, detectorFinish(detectorShelfColors[D.shelf]));
-				pivot.rotation.y = Math.atan2(T.x-D.x, T.z-D.z);
+				pivot.add(
+					B(
+						0.5605651140213013 * detectorScale,
+						detectorHeight,
+						detectorDepth,
+						alu,
+						0,
+						0,
+						0,
+					),
+				);
+				projectModel(
+					pivot,
+					'detector.glb',
+					detectorScale,
+					[0, 0, 0],
+					Math.PI,
+					detectorFinish(detectorShelfColors[D.shelf]),
+				);
+				pivot.rotation.y = Math.atan2(T.x - D.x, T.z - D.z);
 				pivot.updateMatrixWorld(true);
-				D.front = pivot.localToWorld(V(0, 0, detectorDepth/2));
-				D.back = pivot.localToWorld(V(0, 0, -detectorDepth/2));
+				D.front = pivot.localToWorld(V(0, 0, detectorDepth / 2));
+				D.back = pivot.localToWorld(V(0, 0, -detectorDepth / 2));
 				D.top = D.h;
 				D.pivotY = pivot.position.y;
 				D.L = Math.hypot(D.x - T.x, D.z - T.z) / layoutDistanceScale;
@@ -1219,7 +1408,7 @@
 					[D.name, `L ${D.L.toFixed(2)} м · α ${D.alpha.toFixed(0)}°`],
 					{ size: 0.17, accent: HEX(COL[D.kind]) },
 				);
-				lb.position.set(D.x + Math.sign(D.x)*0.8, D.pivotY + 0.1, D.z);
+				lb.position.set(D.x + Math.sign(D.x) * 0.8, D.pivotY + 0.1, D.z);
 				labels.add(lb);
 			}
 			/* ---------- server rack at right wall ---------- */
@@ -1430,26 +1619,36 @@
 
 			/* ---------- labels for source, wall, targets ---------- */
 			{
-				const l = tag(['miniGen · D‑T 14 МэВ', '3·10⁸ н/с · 24 В · 45 Вт', `До цели ${targetDistance.toFixed(2)} м`], {
-					size: 0.18,
-					accent: HEX(COL.beam),
-				});
+				const l = tag(
+					[
+						'miniGen · D‑T 14 МэВ',
+						'3·10⁸ н/с · 24 В · 45 Вт',
+						`До цели ${targetDistance.toFixed(2)} м`,
+					],
+					{
+						size: 0.18,
+						accent: HEX(COL.beam),
+					},
+				);
 				l.position.set(GEN.x, GEN.h + generatorHeight + 0.1, GEN.z);
 				labels.add(l);
 			}
 			{
-				const l = tag(['Стенка 1,8×1,6×0,35 м', 'стекло 1,8 м · грунт только по бокам'], {
-					size: 0.15,
-					accent: '#8a6a45',
-				});
-				l.position.set(-1.05, glassHeight+0.1, WZ);
+				const l = tag(
+					['Стенка 1,8×1,6×0,35 м', 'стекло 1,8 м · грунт только по бокам'],
+					{
+						size: 0.15,
+						accent: '#8a6a45',
+					},
+				);
+				l.position.set(-1.05, glassHeight + 0.1, WZ);
 				labels.add(l);
 			}
 			const mineTags = [
-				['ТМ‑62М', -0.18, Y0+0.36, TZ],
-				['ПМН‑2', 0.15, Y0+0.15, TZ],
-				['ТНТ 2×400 г', 0.33, Y0+0.14, TZ + 0.2],
-				['C‑4 M112', 0.15, Y0+0.07, TZ - 0.22],
+				['ТМ‑62М', -0.18, Y0 + 0.36, TZ],
+				['ПМН‑2', 0.15, Y0 + 0.15, TZ],
+				['ТНТ 2×400 г', 0.33, Y0 + 0.14, TZ + 0.2],
+				['C‑4 M112', 0.15, Y0 + 0.07, TZ - 0.22],
 			];
 			for (const [t, x, y, z] of mineTags) {
 				const l = tag([t], { size: 0.085, accent: '#4d5a3a' });
@@ -1459,54 +1658,111 @@
 
 			/* ---------- dimensions ---------- */
 			// Flat navy floor markings matching the reference diagram.
-			const floorInk = new THREE.MeshBasicMaterial({color:0x203c78});
+			const floorInk = new THREE.MeshBasicMaterial({ color: 0x203c78 });
 			const markingY = 0.014;
-			function floorStroke(a,b,width=0.065){
-				const dx=b.x-a.x,dz=b.z-a.z;
-				const stripe=new THREE.Mesh(new THREE.BoxGeometry(width,0.003,Math.hypot(dx,dz)),floorInk);
-				stripe.position.set((a.x+b.x)/2,markingY,(a.z+b.z)/2);
-				stripe.rotation.y=Math.atan2(dx,dz);dims.add(stripe);
+			function floorStroke(a, b, width = 0.065) {
+				const dx = b.x - a.x,
+					dz = b.z - a.z;
+				const stripe = new THREE.Mesh(
+					new THREE.BoxGeometry(width, 0.003, Math.hypot(dx, dz)),
+					floorInk,
+				);
+				stripe.position.set((a.x + b.x) / 2, markingY, (a.z + b.z) / 2);
+				stripe.rotation.y = Math.atan2(dx, dz);
+				dims.add(stripe);
 			}
-			function floorArrow(a,b){
-				floorStroke(a,b);
-				const direction=b.clone().sub(a).normalize(),side=V(-direction.z,0,direction.x);
-				for(const sign of [-1,1]) floorStroke(b,b.clone().addScaledVector(direction,-0.23).addScaledVector(side,sign*0.13));
+			function floorArrow(a, b) {
+				floorStroke(a, b);
+				const direction = b.clone().sub(a).normalize(),
+					side = V(-direction.z, 0, direction.x);
+				for (const sign of [-1, 1])
+					floorStroke(
+						b,
+						b
+							.clone()
+							.addScaledVector(direction, -0.23)
+							.addScaledVector(side, sign * 0.13),
+					);
 			}
-			function inkText(text,x,z,rotation=0,height=0.28){
-				const label=floorText(text,x,z,height,'#203c78',rotation,500);
-				label.position.y=markingY+0.004;dims.add(label);
+			function inkText(text, x, z, rotation = 0, height = 0.28) {
+				const label = floorText(text, x, z, height, '#203c78', rotation, 500);
+				label.position.y = markingY + 0.004;
+				dims.add(label);
 			}
 			// Longitudinal arrows indicate the 1–10 m range toward the mines.
-			const sourceMark=V(0,0,GEN.z-0.3),targetMark=V(0,0,WZ+0.23);
-			floorArrow(sourceMark,targetMark);
-            // Use the visible distance-arrow scale, including its equipment clearances.
-            const floorTravelSpan = sourceMark.distanceTo(targetMark) * lateralTravel / targetDistance;
-			inkText('L ≈ 1–10 м',-0.3,(sourceMark.z+targetMark.z)/2,Math.PI/2);
-			for(const side of [-1,1]){
-				const start=V(side*(detectorStandX-0.35),0,detectorStandZ-0.1),end=V(side*0.48,0,WZ+0.23);
-				floorArrow(start,end);
-				let angle=Math.atan2(-(end.z-start.z),end.x-start.x);
-				if(angle>Math.PI/2) angle-=Math.PI;
-				inkText('L ≈ 1–10 м',(start.x+end.x)/2+side*0.25,(start.z+end.z)/2,angle);
+			const sourceMark = V(0, 0, GEN.z - 0.3),
+				targetMark = V(0, 0, WZ + 0.23);
+			floorArrow(sourceMark, targetMark);
+			// Use the visible distance-arrow scale, including its equipment clearances.
+			const floorTravelSpan =
+				(sourceMark.distanceTo(targetMark) * lateralTravel) / targetDistance;
+			inkText(
+				'L ≈ 1–10 м',
+				-0.3,
+				(sourceMark.z + targetMark.z) / 2,
+				Math.PI / 2,
+			);
+			for (const side of [-1, 1]) {
+				const start = V(
+						side * (detectorStandX - 0.35),
+						0,
+						detectorStandZ - 0.1,
+					),
+					end = V(side * 0.48, 0, WZ + 0.23);
+				floorArrow(start, end);
+				let angle = Math.atan2(-(end.z - start.z), end.x - start.x);
+				if (angle > Math.PI / 2) angle -= Math.PI;
+				inkText(
+					'L ≈ 1–10 м',
+					(start.x + end.x) / 2 + side * 0.25,
+					(start.z + end.z) / 2,
+					angle,
+				);
 				// Angle between the inward horizontal direction and the target direction.
-				const base=side<0?0:-Math.PI;
-				const aim=Math.atan2(end.z-start.z,end.x-start.x);
-				const radius=0.68;
-				for(let i=0;i<40;i++){
-					const a=base+(aim-base)*i/40,b=base+(aim-base)*(i+1)/40;
-					floorStroke(V(start.x+radius*Math.cos(a),0,start.z+radius*Math.sin(a)),V(start.x+radius*Math.cos(b),0,start.z+radius*Math.sin(b)),0.035);
+				const base = side < 0 ? 0 : -Math.PI;
+				const aim = Math.atan2(end.z - start.z, end.x - start.x);
+				const radius = 0.68;
+				for (let i = 0; i < 40; i++) {
+					const a = base + ((aim - base) * i) / 40,
+						b = base + ((aim - base) * (i + 1)) / 40;
+					floorStroke(
+						V(
+							start.x + radius * Math.cos(a),
+							0,
+							start.z + radius * Math.sin(a),
+						),
+						V(
+							start.x + radius * Math.cos(b),
+							0,
+							start.z + radius * Math.sin(b),
+						),
+						0.035,
+					);
 				}
-				const mid=(base+aim)/2;
-				inkText('α',start.x+0.47*Math.cos(mid),start.z+0.47*Math.sin(mid),0,0.3);
+				const mid = (base + aim) / 2;
+				inkText(
+					'α',
+					start.x + 0.47 * Math.cos(mid),
+					start.z + 0.47 * Math.sin(mid),
+					0,
+					0.3,
+				);
 				// Horizontal arrows indicate allowable lateral travel, not target distance.
-                floorArrow(V(0,0,GEN.z+0.65),V(side*floorTravelSpan,0,GEN.z+0.65));
-				inkText(`${lateralTravel} м`,side*floorTravelSpan/2,GEN.z+0.4);
+				floorArrow(
+					V(0, 0, GEN.z + 0.65),
+					V(side * floorTravelSpan, 0, GEN.z + 0.65),
+				);
+				inkText(
+					`${lateralTravel} м`,
+					(side * floorTravelSpan) / 2,
+					GEN.z + 0.4,
+				);
 			}
 
 			// Compact presentation without changing the metric layout or object proportions.
-            scene.scale.setScalar(0.65);
+			scene.scale.setScalar(0.65);
 
-            /* ---------- cameras & controls ---------- */
+			/* ---------- cameras & controls ---------- */
 			const persp = new THREE.PerspectiveCamera(42, 1, 0.05, 200);
 			persp.position.set(0, 13.5, 7.8);
 			const pc = new OrbitControls(persp, renderer.domElement);
@@ -1680,7 +1936,7 @@
 			document.getElementById('devlist').innerHTML = DEV.map(
 				(D) => `
   <div class="dev"><span class="dot" style="background:${HEX(COL[D.kind])}"></span><b>${D.name}</b><span class="L">${D.L.toFixed(2)} м</span>
-  <span class="m">${D.sub}<br>x ${(D.x/layoutDistanceScale).toFixed(1)} · d ${((GEN.z-D.z)/layoutDistanceScale).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · полка ${D.shelf + 1}: ${D.h.toFixed(2)} м</span></div>`,
+  <span class="m">${D.sub}<br>x ${(D.x / layoutDistanceScale).toFixed(1)} · d ${((GEN.z - D.z) / layoutDistanceScale).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · полка ${D.shelf + 1}: ${D.h.toFixed(2)} м</span></div>`,
 			).join('');
 			document.getElementById('legend').innerHTML = Object.values(CAB)
 				.map(
