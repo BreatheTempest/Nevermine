@@ -366,7 +366,7 @@
 			<div class="main">
 				<div id="view">
 					<div class="vchip" id="chip-a">Перспектива</div>
-					<div class="vchip" id="chip-b">Вид сверху · сетка 0,5 м</div>
+					<div class="vchip" id="chip-b">Вид сверху</div>
 					<div class="hint" id="hint">тянуть — вращать · колесо — масштаб</div>
 				</div>
 				<aside>
@@ -396,7 +396,7 @@
 							<dt>Габарит</dt>
 							<dd>108×203×254 мм, 6,8 кг</dd>
 							<dt>Высота излучателя</dt>
-							<dd>0,87 м от пола</dd>
+							<dd id="emitter-height"></dd>
 						</dl>
 					</section>
 					<section>
@@ -407,7 +407,7 @@
 							<dt>Слои</dt>
 							<dd>6 × 16,7 см, снизу вверх</dd>
 							<dt>Положение</dt>
-							<dd>5,43–5,78 м от miniGen</dd>
+							<dd id="wall-distance"></dd>
 						</dl>
 						<div class="layers" aria-label="Слои снизу вверх">
 							<span style="background: #d4bb86"></span
@@ -423,7 +423,7 @@
 						</p>
 					</section>
 					<section>
-						<h2>Цели за стенкой (лоток с песком, 6,25 м)</h2>
+						<h2>Цели за стенкой (лоток с песком, 10 м от miniGen)</h2>
 						<dl>
 							<dt>ТМ‑62М</dt>
 							<dd>ПТ мина, Ø320 мм, 7,5 кг ТНТ</dd>
@@ -491,8 +491,20 @@
 					modelCache.set(url, gltfLoader.loadAsync(url));
 				return modelCache.get(url);
 			}
-			// Fit imported bounds to the existing layout; leave shared GLB materials and embedded maps intact.
-			function projectModel(parent, file, size, center, rotationY = 0) {
+			// Shared finishes for both stand models, mapped by their authored material names.
+			const standFinishes = {
+				glass: new THREE.MeshPhysicalMaterial({name:'Stand frosted glass', color:0xf5f9fc, metalness:0, roughness:0.16, transmission:0.92, thickness:0.018, ior:1.45, side:THREE.DoubleSide}),
+				aluminum: new THREE.MeshStandardMaterial({name:'Stand aluminum', color:0xf0f3f6, metalness:0.85, roughness:0.12}),
+				plastic: new THREE.MeshStandardMaterial({name:'Stand dark plastic', color:0x202226, metalness:0, roughness:0.72}),
+			};
+			function standFinish(material){
+				if (/glass/i.test(material.name)) return standFinishes.glass;
+				if (/metal/i.test(material.name)) return standFinishes.aluminum;
+				if (/plastic/i.test(material.name)) return standFinishes.plastic;
+				return material;
+			}
+			// Fit imported bounds without changing materials on the cached source model.
+			function projectModel(parent, file, size, center, rotationY = 0, materialTransform = null) {
 				const fallback = [...parent.children];
 				const job = loadModel(file)
 					.then((gltf) => {
@@ -522,7 +534,11 @@
 							.add(new THREE.Vector3(...center));
 						model.traverse((node) => {
 							if (node.isMesh) {
-								node.castShadow = true;
+								if (/^stand_[23]_shelves\.glb$/.test(file)) {
+									node.material = Array.isArray(node.material) ? node.material.map(standFinish) : standFinish(node.material);
+								}
+								if (materialTransform) node.material = Array.isArray(node.material) ? node.material.map(materialTransform) : materialTransform(node.material);
+                                node.castShadow = node.material !== standFinishes.glass;
 								node.receiveShadow = true;
 							}
 						});
@@ -813,59 +829,6 @@
 				B(0.02, 0.08, RZ1 - RZ0, skirt, RX1 - 0.01, 0.04, (RZ0 + RZ1) / 2),
 			);
 
-			const gp = { minor: [], major: [], five: [] };
-			const cat = (v) =>
-				Math.abs(v % 5) < 1e-6
-					? 'five'
-					: Math.abs(v % 1) < 1e-6
-						? 'major'
-						: 'minor';
-			for (let x = RX0; x <= RX1 + 1e-6; x += 0.5)
-				gp[cat(x)].push(V(x, 0.004, RZ0), V(x, 0.004, RZ1));
-			for (let z = -9; z <= 4.5 + 1e-6; z += 0.5)
-				gp[cat(z)].push(V(RX0, 0.004, z), V(RX1, 0.004, z));
-			const gcol = {
-				minor: [0x8fa2b3, 0.35],
-				major: [0x4f6679, 0.6],
-				five: [0x1f3d5c, 0.95],
-			};
-			for (const k in gp) {
-				const l = new THREE.LineSegments(
-					new THREE.BufferGeometry().setFromPoints(gp[k]),
-					new THREE.LineBasicMaterial({
-						color: gcol[k][0],
-						transparent: true,
-						opacity: gcol[k][1],
-					}),
-				);
-				scene.add(l);
-			}
-			for (let x = -7; x <= 7; x++) {
-				scene.add(floorText(String(x).replace('-', '−'), x, 4.15, 0.3));
-			}
-			for (let z = 0; z >= -8; z--) {
-				scene.add(
-					floorText(`${-z} м`, -7.45, z - 0.22, 0.3, '#1f3d5c', 0, 700),
-				);
-			}
-			for (let z = 1; z <= 4; z++) {
-				scene.add(floorText(`−${z}`, -7.45, z - 0.22, 0.26, '#5a6f82'));
-			}
-			scene.add(
-				floorText('X, м (поперёк оси пучка)', 0, 4.42, 0.2, '#5a6f82', 0, 500),
-			);
-			scene.add(
-				floorText(
-					'Расстояние от miniGen, м',
-					-7.82,
-					-4,
-					0.2,
-					'#5a6f82',
-					Math.PI / 2,
-					500,
-				),
-			);
-
 			/* ---------- lighting ---------- */
 			scene.add(new THREE.HemisphereLight(0xffffff, 0x8d939b, 1.05));
 			const sun = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -885,10 +848,11 @@
 			scene.add(sun, sun.target);
 
 			/* ---------- cart on casters ---------- */
+			const STAND_SCALE = 1;
 			function cart(w, d, h, modelFile = 'stand_2_shelves.glb') {
 				const g = new THREE.Group();
-				g.add(B(w, 0.03, d, deck, 0, h, 0));
-				g.add(B(w - 0.02, 0.025, d - 0.02, deck, 0, 0.21, 0));
+				g.add(B(w, 0.03, d, standFinishes.glass, 0, h, 0));
+				g.add(B(w - 0.02, 0.025, d - 0.02, standFinishes.glass, 0, 0.21, 0));
 				const ix = w / 2 - 0.03,
 					iz = d / 2 - 0.03;
 				for (const sx of [-1, 1])
@@ -897,27 +861,28 @@
 							C(
 								0.016,
 								h - 0.12,
-								steel,
+								standFinishes.aluminum,
 								sx * ix,
 								0.12 + (h - 0.12) / 2,
 								sz * iz,
 								12,
 							),
 						);
-						g.add(B(0.05, 0.035, 0.05, dark, sx * ix, 0.105, sz * iz));
-						const wh = C(0.045, 0.03, rubber, sx * ix, 0.047, sz * iz, 20);
+						g.add(B(0.05, 0.035, 0.05, standFinishes.plastic, sx * ix, 0.105, sz * iz));
+						const wh = C(0.045, 0.03, standFinishes.plastic, sx * ix, 0.047, sz * iz, 20);
 						wh.rotation.z = Math.PI / 2;
 						g.add(wh);
-						const hub = C(0.016, 0.034, steel, sx * ix, 0.047, sz * iz, 12);
+						const hub = C(0.016, 0.034, standFinishes.aluminum, sx * ix, 0.047, sz * iz, 12);
 						hub.rotation.z = Math.PI / 2;
 						g.add(hub);
 					}
 				for (const sx of [-1, 1])
 					g.add(
-						C(0.011, 0.2, steel, sx * w * 0.38, h + 0.1, d / 2 + 0.015, 10),
+						C(0.011, 0.2, standFinishes.aluminum, sx * w * 0.38, h + 0.1, d / 2 + 0.015, 10),
 					);
-				g.add(B(w * 0.78, 0.022, 0.022, steel, 0, h + 0.2, d / 2 + 0.015));
-				projectModel(g, modelFile, [w, h + 0.015, d], [0, (h + 0.015) / 2, 0]);
+				g.add(B(w * 0.78, 0.022, 0.022, standFinishes.aluminum, 0, h + 0.2, d / 2 + 0.015));
+				// Keep the GLB's authored proportions and use the same world scale as the tall stands.
+				projectModel(g, modelFile, STAND_SCALE, [0, 0.977209061384201 * STAND_SCALE / 2, 0], -2*Math.atan2(-0.07428741455078125, 0.997236967086792));
 				return g;
 			}
 
@@ -1035,16 +1000,22 @@
 			);
 
 			/* ---------- miniGen on its cart ---------- */
-			const GEN = { x: 0, z: 0, w: 0.6, d: 0.5, h: 0.75 };
-			const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
+			const generatorScale = 1;
+			const generatorHeight = 0.45434033847448757 * generatorScale;
+			// All equipment shares a 10 m floor-plan radius centered on the mine.
+            const targetDistance = 10;
+            const layoutDistanceScale = 0.75; // Compress spacing only; keep equipment proportions.
+            const GEN = { x: 0, z: TZ + targetDistance * layoutDistanceScale, w: 0.88, d: 0.88, h: 0.9716459214687347 * STAND_SCALE };
+			document.getElementById('wall-distance').textContent = [GEN.z-(WZ+0.175), GEN.z-(WZ-0.175)].map(d=>(d/layoutDistanceScale).toFixed(2).replace('.', ',')).join('–') + ' м от miniGen';
+            const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
 			genCart.position.set(GEN.x, 0, GEN.z);
 			scene.add(genCart);
 			genCart.add(
-				B(0.2, 0.08, 0.15, dark, -0.13, 0.264, 0),
-				B(0.22, 0.07, 0.18, M(0x5c6670, 0.5, 0.3), 0.14, 0.259, 0),
+				B(0.2, 0.08, 0.15, dark, -0.13, 0.363, 0),
+				B(0.22, 0.07, 0.18, M(0x5c6670, 0.5, 0.3), 0.14, 0.358, 0),
 			);
 			const genPivot = new THREE.Group();
-			genPivot.position.set(GEN.x, GEN.h + 0.015 + 0.14, GEN.z);
+			genPivot.position.set(GEN.x, GEN.h + generatorHeight / 2, GEN.z);
 			scene.add(genPivot);
 			{
 				const silver = M(0xc8cdd2, 0.35, 0.6),
@@ -1066,14 +1037,15 @@
 			projectModel(
 				genPivot,
 				'minGen.glb',
-				[0.22, 0.26, 0.3],
-				[0, -0.01, 0],
+				generatorScale,
+				[0, 0, 0],
 				Math.PI,
 			);
 			genPivot.rotation.y = Math.atan2(T.x - GEN.x, T.z - GEN.z);
 			scene.updateMatrixWorld(true);
-			const E = genPivot.localToWorld(V(0, 0, 0.1));
-			const genBack = genPivot.localToWorld(V(0, -0.04, -0.16));
+			const E = genPivot.localToWorld(V(0, -0.065 * generatorScale, 0.21 * generatorScale));
+			document.getElementById('emitter-height').textContent = E.y.toFixed(2).replace('.', ',') + ' м от пола';
+			const genBack = genPivot.localToWorld(V(0, -0.04 * generatorScale, -0.214 * generatorScale));
 
 			/* ---------- detector heads (built facing +Z) ---------- */
 			function headLaBr() {
@@ -1135,16 +1107,41 @@
 			};
 			const HEX = (n) => '#' + n.toString(16).padStart(6, '0');
 			// Shelf tops measured from stand_3_shelves.glb, relative to its lowest wheel.
-			const shelfHeights = [0.332713, 0.981970, 1.631227];
+			// Target distance and lateral travel are independent measurements.
+            const lateralTravel = 5;
+            const standTargetDistance = targetDistance;
+            const detectorStandX = lateralTravel * layoutDistanceScale;
+            // Position each stand on the 10 m radius around the mines (floor-plan distance).
+            const detectorStandZ = TZ + Math.sqrt(standTargetDistance ** 2 - lateralTravel ** 2) * layoutDistanceScale;
+			const shelfHeights = [0.332713, 0.981970, 1.631227].map(y => y * STAND_SCALE);
 			const detectorScale = 0.7;
+            const detectorShelfColors = [0x24b85a, 0x2879e8, 0x9b4de0]; // bottom, middle, top
+            function detectorFinish(color) {
+                const materials = new Map();
+                return original => {
+                    if (materials.has(original)) return materials.get(original);
+                    const material = original.clone();
+                    if (/LED/i.test(original.name)) {
+                        material.color.setHex(color);
+                        material.emissive.setHex(color);
+                        material.emissiveIntensity = 3;
+                    } else if (/Metal Color/i.test(original.name)) {
+                        material.color.setHex(color);
+                        material.metalness = 0.65;
+                        material.roughness = 0.25;
+                    }
+                    materials.set(original, material);
+                    return material;
+                };
+            }
 			const detectorHeight = 0.56056505208835 * detectorScale;
 			const detectorDepth = 0.39439132809638977 * detectorScale;
-			for (const x of [-5, 5]) {
+			for (const x of [-detectorStandX, detectorStandX]) {
 				const stand = new THREE.Group();
-				stand.position.set(x, 0, 0);scene.add(stand);
-				for (const y of shelfHeights) stand.add(B(0.75, 0.025, 0.75, deck, 0, y-0.0125, 0));
-				for (const sx of [-1,1]) for (const sz of [-1,1]) stand.add(C(0.018, 1.63, steel, sx*0.36, 0.815, sz*0.36));
-				projectModel(stand, 'stand_3_shelves.glb', 1, [0, 0.8161577731370926, 0], -2*Math.atan2(0.9699319005012512, 0.24337689578533173));
+				stand.position.set(x, 0, detectorStandZ);scene.add(stand);
+				for (const y of shelfHeights) stand.add(B(0.75, 0.025, 0.75, standFinishes.glass, 0, y-0.0125, 0));
+				for (const sx of [-1,1]) for (const sz of [-1,1]) stand.add(C(0.018, 1.63, standFinishes.aluminum, sx*0.36, 0.815, sz*0.36));
+				projectModel(stand, 'stand_3_shelves.glb', STAND_SCALE, [0, 0.8161577731370926 * STAND_SCALE, 0], -2*Math.atan2(0.9699319005012512, 0.24337689578533173));
 			}
 			const DEV = [
 				{
@@ -1192,7 +1189,7 @@
 			];
 			DEV.forEach((D, i) => {
 				D.shelf = Math.floor(i / 2);
-				Object.assign(D, {x: i % 2 ? 5 : -5, z: 0, w: 0.82, d: 0.82, h: shelfHeights[D.shelf]});
+				Object.assign(D, {x: (i % 2 ? 1 : -1) * detectorStandX, z: detectorStandZ, w: 0.82, d: 0.82, h: shelfHeights[D.shelf]});
 			});
 			const CAB = {
 				sig: { c: 0xe8b923, name: 'Сигнал детектора → оцифровщик', y: 1.42 },
@@ -1219,42 +1216,15 @@
 				pivot.position.set(D.x, D.h + detectorHeight/2, D.z);
 				scene.add(pivot);
 				pivot.add(B(0.5605651140213013*detectorScale, detectorHeight, detectorDepth, alu, 0, 0, 0));
-				projectModel(pivot, 'detector.glb', detectorScale, [0,0,0], Math.PI);
+				projectModel(pivot, 'detector.glb', detectorScale, [0,0,0], Math.PI, detectorFinish(detectorShelfColors[D.shelf]));
 				pivot.rotation.y = Math.atan2(T.x-D.x, T.z-D.z);
 				pivot.updateMatrixWorld(true);
 				D.front = pivot.localToWorld(V(0, 0, detectorDepth/2));
 				D.back = pivot.localToWorld(V(0, 0, -detectorDepth/2));
 				D.top = D.h;
 				D.pivotY = pivot.position.y;
-				D.L = Math.hypot(D.x - T.x, D.z - T.z);
+				D.L = Math.hypot(D.x - T.x, D.z - T.z) / layoutDistanceScale;
 				D.alpha = (Math.atan2(Math.abs(D.x - T.x), D.z - T.z) * 180) / Math.PI;
-				if (D.shelf === 0) {
-				const coord = `x ${D.x.toFixed(1).replace('-', '−')} · d ${(-D.z).toFixed(1)} м`;
-				scene.add(
-					floorText(coord, D.x, D.z + D.d / 2 + 0.3, 0.15, '#33485c', 0, 600),
-				);
-				// footprint marks
-				const fp = [
-					V(-D.w / 2, 0, -D.d / 2),
-					V(D.w / 2, 0, -D.d / 2),
-					V(D.w / 2, 0, D.d / 2),
-					V(-D.w / 2, 0, D.d / 2),
-					V(-D.w / 2, 0, -D.d / 2),
-				].map((p) => p.add(V(D.x, 0.007, D.z)).multiply(V(1, 1, 1)));
-				const fpl = new THREE.Line(
-					new THREE.BufferGeometry().setFromPoints(
-						fp.map((p) =>
-							V(
-								p.x + (p.x > D.x ? 0.06 : -0.06),
-								p.y,
-								p.z + (p.z > D.z ? 0.06 : -0.06),
-							),
-						),
-					),
-					new THREE.LineBasicMaterial({ color: COL[D.kind] }),
-				);
-				scene.add(fpl);
-				}
 				const lb = tag(
 					[D.name, `L ${D.L.toFixed(2)} м · α ${D.alpha.toFixed(0)}°`],
 					{ size: 0.17, accent: HEX(COL[D.kind]) },
@@ -1262,18 +1232,6 @@
 				lb.position.set(D.x + Math.sign(D.x)*0.8, D.pivotY + 0.1, D.z);
 				labels.add(lb);
 			}
-			scene.add(
-				floorText(
-					'x 0.0 · d 0.0 м',
-					0,
-					GEN.d / 2 + 0.3,
-					0.15,
-					'#33485c',
-					0,
-					600,
-				),
-			);
-
 			/* ---------- server rack at right wall ---------- */
 			const RK = { x0: 6.95, depth: 1.0, z: -2.0, w: 0.6, h: 2.0 };
 			const rack = new THREE.Group();
@@ -1520,11 +1478,11 @@
 
 			/* ---------- labels for source, wall, targets ---------- */
 			{
-				const l = tag(['miniGen · D‑T 14 МэВ', '3·10⁸ н/с · 24 В · 45 Вт'], {
+				const l = tag(['miniGen · D‑T 14 МэВ', '3·10⁸ н/с · 24 В · 45 Вт', `До цели ${targetDistance.toFixed(2)} м`], {
 					size: 0.18,
 					accent: HEX(COL.beam),
 				});
-				l.position.set(GEN.x, 1.3, GEN.z);
+				l.position.set(GEN.x, GEN.h + generatorHeight + 0.1, GEN.z);
 				labels.add(l);
 			}
 			{
@@ -1548,59 +1506,57 @@
 			}
 
 			/* ---------- dimensions ---------- */
-			function dimLine(a, b, text, col = 0x34506b) {
-				const l = new THREE.Line(
-					new THREE.BufferGeometry().setFromPoints([a, b]),
-					new THREE.LineDashedMaterial({
-						color: col,
-						dashSize: 0.14,
-						gapSize: 0.08,
-					}),
-				);
-				l.computeLineDistances();
-				dims.add(l);
-				for (const p of [a, b]) {
-					const m = new THREE.Mesh(
-						new THREE.CircleGeometry(0.05, 16),
-						new THREE.MeshBasicMaterial({ color: col }),
-					);
-					m.rotation.x = -Math.PI / 2;
-					m.position.copy(p);
-					dims.add(m);
-				}
-				const s = tag([text], { size: 0.12, accent: HEX(col) });
-				s.position.copy(a).lerp(b, 0.5);
-				s.position.y = 0.03;
-				dims.add(s);
+			// Flat navy floor markings matching the reference diagram.
+			const floorInk = new THREE.MeshBasicMaterial({color:0x203c78});
+			const markingY = 0.014;
+			function floorStroke(a,b,width=0.065){
+				const dx=b.x-a.x,dz=b.z-a.z;
+				const stripe=new THREE.Mesh(new THREE.BoxGeometry(width,0.003,Math.hypot(dx,dz)),floorInk);
+				stripe.position.set((a.x+b.x)/2,markingY,(a.z+b.z)/2);
+				stripe.rotation.y=Math.atan2(dx,dz);dims.add(stripe);
 			}
-			const fy = 0.012;
-			dimLine(
-				V(0.75, fy, 0),
-				V(0.75, fy, TZ),
-				'miniGen → цель 6,25 м',
-				0x8a5a12,
-			);
-			dimLine(
-				V(-0.75, fy, 0),
-				V(-0.75, fy, WZ + 0.175),
-				'до стенки 5,43 м',
-				0x6b4f30,
-			);
-			for (const D of DEV.filter((d) => d.shelf === 0))
-				dimLine(
-					V(T.x, fy, T.z),
-					V(D.x, fy, D.z),
-					`${D.L.toFixed(2)} м`,
-					COL[D.kind],
-				);
-			dimLine(V(0, fy, 0.75), V(-5, fy, 0.75), '5,0 м');
-			dimLine(V(0, fy, 0.75), V(5, fy, 0.75), '5,0 м');
+			function floorArrow(a,b){
+				floorStroke(a,b);
+				const direction=b.clone().sub(a).normalize(),side=V(-direction.z,0,direction.x);
+				for(const sign of [-1,1]) floorStroke(b,b.clone().addScaledVector(direction,-0.23).addScaledVector(side,sign*0.13));
+			}
+			function inkText(text,x,z,rotation=0,height=0.28){
+				const label=floorText(text,x,z,height,'#203c78',rotation,500);
+				label.position.y=markingY+0.004;dims.add(label);
+			}
+			// Longitudinal arrows indicate the 1–10 m range toward the mines.
+			const sourceMark=V(0,0,GEN.z-0.3),targetMark=V(0,0,WZ+0.23);
+			floorArrow(sourceMark,targetMark);
+			inkText('L ≈ 1–10 м',-0.3,(sourceMark.z+targetMark.z)/2,Math.PI/2);
+			for(const side of [-1,1]){
+				const start=V(side*(detectorStandX-0.35),0,detectorStandZ-0.1),end=V(side*0.48,0,WZ+0.23);
+				floorArrow(start,end);
+				let angle=Math.atan2(-(end.z-start.z),end.x-start.x);
+				if(angle>Math.PI/2) angle-=Math.PI;
+				inkText('L ≈ 1–10 м',(start.x+end.x)/2+side*0.25,(start.z+end.z)/2,angle);
+				// Angle between the inward horizontal direction and the target direction.
+				const base=side<0?0:-Math.PI;
+				const aim=Math.atan2(end.z-start.z,end.x-start.x);
+				const radius=0.68;
+				for(let i=0;i<40;i++){
+					const a=base+(aim-base)*i/40,b=base+(aim-base)*(i+1)/40;
+					floorStroke(V(start.x+radius*Math.cos(a),0,start.z+radius*Math.sin(a)),V(start.x+radius*Math.cos(b),0,start.z+radius*Math.sin(b)),0.035);
+				}
+				const mid=(base+aim)/2;
+				inkText('α',start.x+0.47*Math.cos(mid),start.z+0.47*Math.sin(mid),0,0.3);
+				// Horizontal arrows indicate allowable lateral travel, not target distance.
+                floorArrow(V(0,0,GEN.z+0.65),V(side*lateralTravel*layoutDistanceScale,0,GEN.z+0.65));
+				inkText(`${lateralTravel} м`,side*lateralTravel*layoutDistanceScale/2,GEN.z+0.4);
+			}
 
-			/* ---------- cameras & controls ---------- */
+			// Compact presentation without changing the metric layout or object proportions.
+            scene.scale.setScalar(0.65);
+
+            /* ---------- cameras & controls ---------- */
 			const persp = new THREE.PerspectiveCamera(42, 1, 0.05, 200);
-			persp.position.set(2.2, 8.2, 10.8);
+			persp.position.set(0, 13.5, 7.8);
 			const pc = new OrbitControls(persp, renderer.domElement);
-			pc.target.set(0, 0.4, -2.6);
+			pc.target.set(0, 0.26, -1.82);
 			pc.enableDamping = true;
 			pc.maxPolarAngle = Math.PI * 0.495;
 			pc.minDistance = 1;
@@ -1770,7 +1726,7 @@
 			document.getElementById('devlist').innerHTML = DEV.map(
 				(D) => `
   <div class="dev"><span class="dot" style="background:${HEX(COL[D.kind])}"></span><b>${D.name}</b><span class="L">${D.L.toFixed(2)} м</span>
-  <span class="m">${D.sub}<br>x ${D.x.toFixed(1)} · d ${(-D.z).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · полка ${D.shelf + 1}: ${D.h.toFixed(2)} м</span></div>`,
+  <span class="m">${D.sub}<br>x ${(D.x/layoutDistanceScale).toFixed(1)} · d ${((GEN.z-D.z)/layoutDistanceScale).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · полка ${D.shelf + 1}: ${D.h.toFixed(2)} м</span></div>`,
 			).join('');
 			document.getElementById('legend').innerHTML = Object.values(CAB)
 				.map(
