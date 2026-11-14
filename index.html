@@ -1,0 +1,1848 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf8" />
+		<meta
+			name="viewport"
+			content="width=device-width,initial-scale=1,viewport-fit=cover"
+		/>
+		<style>
+			:root {
+				color-scheme: light;
+				box-sizing: border-box;
+				padding-top: env(safe-area-inset-top, 0px);
+				padding-bottom: env(safe-area-inset-bottom, 0px);
+			}
+			html {
+				scroll-padding-top: env(safe-area-inset-top, 0px);
+			}
+			body {
+				margin: 0;
+				padding: 0;
+				font:
+					14px -apple-system,
+					BlinkMacSystemFont,
+					sans-serif;
+				background: #fff;
+				color: #000;
+			}
+			img {
+				max-width: 100%;
+			}
+			[hidden]:not([hidden='until-found' i]) {
+				display: none !important;
+			}
+		</style>
+	</head>
+	<body>
+		<title>Стенд FNAA miniGen</title>
+		<meta name="claude:viewport-fit-sides" content="cover" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+		/>
+		<style>
+			/* Layout: full-bleed 3D viewport with a toolbar on top and a spec rail on the right (stacks under the view on phones) */
+			:root {
+				--bg: #e9edf0;
+				--panel: #f8fafb;
+				--fg: #16212c;
+				--muted: #596875;
+				--line: #d3dbe1;
+				--chip: #e3e9ee;
+				--accent: #d9822b;
+				--accent-ink: #ffffff;
+				--gamma: #2a9d4b;
+				--neutron: #2f6fd6;
+				--xray: #8a4fd8;
+				--beam: #e3a21a;
+				--f-ui: 'Golos Text', 'Segoe UI', system-ui, sans-serif;
+				--f-mono:
+					'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme='light']) {
+					--bg: #11171d;
+					--panel: #161e25;
+					--fg: #e4eaef;
+					--muted: #93a3b1;
+					--line: #2a3640;
+					--chip: #223039;
+					--accent: #ec9440;
+					--accent-ink: #1a1206;
+					--gamma: #4cc46c;
+					--neutron: #5b93ec;
+					--xray: #a77ae8;
+					--beam: #f0b53a;
+					color-scheme: dark;
+				}
+			}
+			:root[data-theme='dark'] {
+				--bg: #11171d;
+				--panel: #161e25;
+				--fg: #e4eaef;
+				--muted: #93a3b1;
+				--line: #2a3640;
+				--chip: #223039;
+				--accent: #ec9440;
+				--accent-ink: #1a1206;
+				--gamma: #4cc46c;
+				--neutron: #5b93ec;
+				--xray: #a77ae8;
+				--beam: #f0b53a;
+				color-scheme: dark;
+			}
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				background: var(--bg);
+				color: var(--fg);
+				font-family: var(--f-ui);
+				font-size: 14px;
+			}
+			.app {
+				height: 100%;
+				display: grid;
+				grid-template-rows: auto 1fr;
+			}
+			header {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 10px 20px;
+				padding-block: 10px;
+				padding-left: max(16px, env(safe-area-inset-left, 0px));
+				padding-right: max(16px, env(safe-area-inset-right, 0px));
+				background: var(--panel);
+				border-bottom: 1px solid var(--line);
+			}
+			.brand {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+				margin-right: auto;
+			}
+			.brand small {
+				font: 500 11px/1 var(--f-mono);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--accent);
+			}
+			.brand h1 {
+				margin: 0;
+				font-size: 17px;
+				font-weight: 700;
+				text-wrap: balance;
+			}
+			.seg {
+				display: inline-flex;
+				background: var(--chip);
+				border-radius: 9px;
+				padding: 3px;
+				gap: 2px;
+			}
+			.seg button,
+			.tg {
+				font: 500 13px var(--f-ui);
+				border: 0;
+				background: transparent;
+				color: var(--fg);
+				padding: 7px 12px;
+				border-radius: 7px;
+				cursor: pointer;
+			}
+			.seg button[aria-pressed='true'] {
+				background: var(--panel);
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+				font-weight: 600;
+			}
+			.toggles {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.tg {
+				background: var(--chip);
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.tg::before {
+				content: '';
+				width: 9px;
+				height: 9px;
+				border-radius: 2px;
+				border: 1.5px solid var(--muted);
+			}
+			.tg[aria-pressed='true']::before {
+				background: var(--accent);
+				border-color: var(--accent);
+			}
+			button:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.main {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) 340px;
+				min-height: 0;
+			}
+			#view {
+				position: relative;
+				min-width: 0;
+				min-height: 0;
+				overflow: hidden;
+				touch-action: none;
+				background: #dfe3e6;
+			}
+			#view canvas {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
+			.vchip {
+				position: absolute;
+				font: 500 11px/1 var(--f-mono);
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				background: rgba(22, 33, 44, 0.78);
+				color: #fff;
+				padding: 6px 8px;
+				border-radius: 6px;
+				pointer-events: none;
+			}
+			.hint {
+				position: absolute;
+				right: 10px;
+				bottom: 10px;
+				font: 400 11px var(--f-mono);
+				color: #33404c;
+				background: rgba(255, 255, 255, 0.75);
+				padding: 5px 8px;
+				border-radius: 6px;
+				pointer-events: none;
+			}
+			aside {
+				overflow: auto;
+				background: var(--panel);
+				border-left: 1px solid var(--line);
+				padding-block: 16px;
+				padding-left: max(16px, env(safe-area-inset-left, 0px));
+				padding-right: max(16px, env(safe-area-inset-right, 0px));
+				display: flex;
+				flex-direction: column;
+				gap: 20px;
+			}
+			aside h2 {
+				margin: 0 0 8px;
+				font: 600 11px/1.2 var(--f-mono);
+				letter-spacing: 0.09em;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			.dev {
+				display: grid;
+				grid-template-columns: 10px minmax(0, 1fr) auto;
+				gap: 4px 10px;
+				align-items: baseline;
+				padding: 8px 0;
+				border-top: 1px solid var(--line);
+			}
+			.dev:first-of-type {
+				border-top: 0;
+			}
+			.dot {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				align-self: center;
+			}
+			.dev b {
+				font-weight: 600;
+				font-size: 13.5px;
+			}
+			.dev .m {
+				grid-column: 2/4;
+				font: 400 12px/1.45 var(--f-mono);
+				color: var(--muted);
+				font-variant-numeric: tabular-nums;
+			}
+			.dev .L {
+				font: 500 13px var(--f-mono);
+				font-variant-numeric: tabular-nums;
+			}
+			.leg {
+				display: grid;
+				grid-template-columns: 28px minmax(0, 1fr);
+				gap: 7px 10px;
+				align-items: center;
+				font-size: 13px;
+			}
+			.leg i {
+				height: 5px;
+				border-radius: 3px;
+				display: block;
+			}
+			dl {
+				display: grid;
+				grid-template-columns: auto minmax(0, 1fr);
+				gap: 5px 12px;
+				margin: 0;
+				font-size: 13px;
+			}
+			dt {
+				color: var(--muted);
+			}
+			dd {
+				margin: 0;
+				font-family: var(--f-mono);
+				font-size: 12.5px;
+				font-variant-numeric: tabular-nums;
+			}
+			.layers {
+				display: flex;
+				height: 22px;
+				border-radius: 5px;
+				overflow: hidden;
+				border: 1px solid var(--line);
+				margin-top: 8px;
+			}
+			.layers span {
+				flex: 1;
+			}
+			.note {
+				font-size: 12.5px;
+				color: var(--muted);
+				line-height: 1.5;
+				margin: 6px 0 0;
+			}
+			@media (max-width: 860px) {
+				html,
+				body {
+					height: auto;
+				}
+				.app {
+					height: auto;
+				}
+				.main {
+					grid-template-columns: minmax(0, 1fr);
+					grid-template-rows: 68vh auto;
+				}
+				aside {
+					border-left: 0;
+					border-top: 1px solid var(--line);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					transition: none !important;
+				}
+			}
+		</style>
+
+		<div class="app">
+			<header>
+				<div class="brand">
+					<small>NeverMine · цифровая модель стенда</small>
+					<h1>Стенд FNAA: miniGen, детекторы, стенка с грунтом</h1>
+				</div>
+				<div class="seg" role="group" aria-label="Вид">
+					<button id="v-persp" aria-pressed="false">Перспектива</button>
+					<button id="v-top" aria-pressed="false">Сверху</button>
+					<button id="v-split" aria-pressed="true">Оба вида</button>
+				</div>
+				<div class="toggles">
+					<button class="tg" id="t-labels" aria-pressed="true">Подписи</button>
+					<button class="tg" id="t-rays" aria-pressed="true">Излучение</button>
+					<button class="tg" id="t-cables" aria-pressed="true">Кабели</button>
+					<button class="tg" id="t-dims" aria-pressed="true">Размеры</button>
+				</div>
+			</header>
+			<div class="main">
+				<div id="view">
+					<div class="vchip" id="chip-a">Перспектива</div>
+					<div class="vchip" id="chip-b">Вид сверху · сетка 0,5 м</div>
+					<div class="hint" id="hint">тянуть — вращать · колесо — масштаб</div>
+				</div>
+				<aside>
+					<section>
+						<h2>Детекторы и расстояния до цели</h2>
+						<div id="devlist"></div>
+					</section>
+					<section>
+						<h2>Кабели → серверная стойка</h2>
+						<div class="leg" id="legend"></div>
+					</section>
+					<section>
+						<h2>Источник нейтронов</h2>
+						<dl>
+							<dt>Модель</dt>
+							<dd>Thermo Scientific miniGen</dd>
+							<dt>Реакция</dt>
+							<dd>D‑T, 14 МэВ</dd>
+							<dt>Выход</dt>
+							<dd>3·10⁸ н/с (макс.)</dd>
+							<dt>Импульсы</dt>
+							<dd>0,5–20 кГц, от 5 мкс</dd>
+							<dt>Питание</dt>
+							<dd>24 В DC, 45 Вт</dd>
+							<dt>Управление</dt>
+							<dd>Ethernet UDP / RS‑232</dd>
+							<dt>Габарит</dt>
+							<dd>108×203×254 мм, 6,8 кг</dd>
+							<dt>Высота излучателя</dt>
+							<dd>0,87 м от пола</dd>
+						</dl>
+					</section>
+					<section>
+						<h2>Стенка перед минами</h2>
+						<dl>
+							<dt>Размер</dt>
+							<dd>1,0 × 1,0 м, толщина 0,35 м</dd>
+							<dt>Слои</dt>
+							<dd>6 × 16,7 см, снизу вверх</dd>
+							<dt>Положение</dt>
+							<dd>5,43–5,78 м от miniGen</dd>
+						</dl>
+						<div class="layers" aria-label="Слои снизу вверх">
+							<span style="background: #d4bb86"></span
+							><span style="background: #85827b"></span
+							><span style="background: #5b4330"></span>
+							<span style="background: #d4bb86"></span
+							><span style="background: #85827b"></span
+							><span style="background: #5b4330"></span>
+						</div>
+						<p class="note">
+							песок · щебень · грунт · песок · щебень · грунт, в стальной раме с
+							прозрачными боковинами из оргстекла.
+						</p>
+					</section>
+					<section>
+						<h2>Цели за стенкой (лоток с песком, 6,25 м)</h2>
+						<dl>
+							<dt>ТМ‑62М</dt>
+							<dd>ПТ мина, Ø320 мм, 7,5 кг ТНТ</dd>
+							<dt>ПМН‑2</dt>
+							<dd>ПП мина, Ø121 мм, 100 г ТГ‑40</dd>
+							<dt>Тротил</dt>
+							<dd>2 шашки по 400 г</dd>
+							<dt>C‑4 (M112)</dt>
+							<dd>блок 0,57 кг</dd>
+						</dl>
+					</section>
+				</aside>
+			</div>
+		</div>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+					"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+				}
+			}
+		</script>
+		<script type="module">
+			import * as THREE from 'three';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+			try {
+				await document.fonts.ready;
+			} catch (e) {}
+
+			const view = document.getElementById('view');
+			const renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.0;
+			view.prepend(renderer.domElement);
+
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color(0xdfe3e6);
+			const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+			/* ---------- project assets (procedural objects remain as loading/error fallbacks) ---------- */
+			const assetStatus = document.createElement('div');
+			assetStatus.className = 'vchip';
+			assetStatus.style.cssText =
+				'left:10px;bottom:40px;max-width:calc(100% - 40px);line-height:1.5';
+			assetStatus.setAttribute('role', 'status');
+			assetStatus.textContent = 'Загрузка моделей и текстур…';
+			view.append(assetStatus);
+			const assetErrors = new Set(),
+				assetJobs = [],
+				modelCache = new Map();
+			const gltfLoader = new GLTFLoader();
+			function reportAssetError(url, error) {
+				assetErrors.add(url);
+				console.warn('Project asset unavailable:', url, error);
+			}
+			function loadModel(file) {
+				const url = 'Models/' + file;
+				if (!modelCache.has(url))
+					modelCache.set(url, gltfLoader.loadAsync(url));
+				return modelCache.get(url);
+			}
+			// Fit imported bounds to the existing layout; leave shared GLB materials and embedded maps intact.
+			function projectModel(parent, file, size, center, rotationY = 0) {
+				const fallback = [...parent.children];
+				const job = loadModel(file)
+					.then((gltf) => {
+						const model = gltf.scene.clone(true),
+							oriented = new THREE.Group();
+						oriented.add(model);
+						oriented.rotation.y = rotationY;
+						const bounds = new THREE.Box3().setFromObject(oriented),
+							extent = bounds.getSize(new THREE.Vector3());
+						if (Math.min(extent.x, extent.y, extent.z) <= 0)
+							throw new Error('Empty model bounds');
+						const wrapper = new THREE.Group();
+						wrapper.add(oriented);
+						wrapper.scale.set(
+							size[0] / extent.x,
+							size[1] / extent.y,
+							size[2] / extent.z,
+						);
+						wrapper.position
+							.copy(
+								bounds
+									.getCenter(new THREE.Vector3())
+									.multiply(wrapper.scale)
+									.negate(),
+							)
+							.add(new THREE.Vector3(...center));
+						model.traverse((node) => {
+							if (node.isMesh) {
+								node.castShadow = true;
+								node.receiveShadow = true;
+							}
+						});
+						fallback.forEach((node) => {
+							node.visible = false;
+						});
+						parent.add(wrapper);
+					})
+					.catch((error) => reportAssetError('Models/' + file, error));
+				assetJobs.push(job);
+			}
+			function projectTexture(file, material, repeat) {
+				const url = 'Textures/' + encodeURIComponent(file);
+				assetJobs.push(
+					new THREE.TextureLoader()
+						.loadAsync(url)
+						.then((texture) => {
+							texture.colorSpace = THREE.SRGBColorSpace;
+							texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+							texture.repeat.set(...repeat);
+							texture.anisotropy = Math.min(
+								8,
+								renderer.capabilities.getMaxAnisotropy(),
+							);
+							material.map = texture;
+							material.needsUpdate = true;
+						})
+						.catch((error) => reportAssetError(url, error)),
+				);
+			}
+
+			/* ---------- materials & primitives ---------- */
+			const M = (c, r = 0.6, m = 0.1, ex = {}) =>
+				new THREE.MeshStandardMaterial({
+					color: c,
+					roughness: r,
+					metalness: m,
+					...ex,
+				});
+			const steel = M(0xb7bec5, 0.35, 0.75),
+				dark = M(0x2b3138, 0.5, 0.35),
+				alu = M(0xd6dadf, 0.28, 0.85),
+				black = M(0x17191c, 0.55, 0.2),
+				rubber = M(0x1a1a1a, 0.9, 0),
+				deck = M(0x3a4550, 0.55, 0.3),
+				lead = M(0x6a7076, 0.45, 0.6),
+				hdpe = M(0xf1f0ea, 0.7, 0),
+				red = M(0xd23b2f, 0.4, 0.1, {
+					emissive: 0x8a1a12,
+					emissiveIntensity: 0.6,
+				});
+			function mesh(geo, mat, x = 0, y = 0, z = 0) {
+				const m = new THREE.Mesh(geo, mat);
+				m.position.set(x, y, z);
+				m.castShadow = true;
+				m.receiveShadow = true;
+				return m;
+			}
+			const B = (w, h, d, mat, x, y, z) =>
+				mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
+			const C = (r, h, mat, x, y, z, seg = 32, r2) =>
+				mesh(new THREE.CylinderGeometry(r, r2 ?? r, h, seg), mat, x, y, z);
+			const CZ = (r, len, mat, x, y, z, seg = 32, r2) => {
+				const m = C(r, len, mat, x, y, z, seg, r2);
+				m.rotation.x = Math.PI / 2;
+				return m;
+			};
+
+			function canvasTex(w, h, draw, repeat = [1, 1]) {
+				const c = document.createElement('canvas');
+				c.width = w;
+				c.height = h;
+				draw(c.getContext('2d'), w, h);
+				const t = new THREE.CanvasTexture(c);
+				t.colorSpace = THREE.SRGBColorSpace;
+				t.wrapS = t.wrapT = THREE.RepeatWrapping;
+				t.repeat.set(repeat[0], repeat[1]);
+				t.anisotropy = 8;
+				return t;
+			}
+			let seed = 7;
+			const rnd = () => {
+				seed = (seed * 16807) % 2147483647;
+				return (seed - 1) / 2147483646;
+			};
+			const sandTex = canvasTex(256, 256, (g, w, h) => {
+				g.fillStyle = '#d4bb86';
+				g.fillRect(0, 0, w, h);
+				for (let i = 0; i < 5000; i++) {
+					g.fillStyle = ['#b99f6b', '#e6d3a6', '#c7ad78', '#a88f5f'][i % 4];
+					g.fillRect(rnd() * w, rnd() * h, 1.5, 1.5);
+				}
+			});
+			const gravelTex = canvasTex(256, 256, (g, w, h) => {
+				g.fillStyle = '#6f6c66';
+				g.fillRect(0, 0, w, h);
+				for (let i = 0; i < 520; i++) {
+					const s = 4 + rnd() * 11;
+					const v = (90 + rnd() * 90) | 0;
+					g.fillStyle = `rgb(${v},${v - 4},${v - 10})`;
+					g.beginPath();
+					g.ellipse(
+						rnd() * w,
+						rnd() * h,
+						s,
+						s * (0.6 + rnd() * 0.4),
+						rnd() * 3,
+						0,
+						7,
+					);
+					g.fill();
+					g.strokeStyle = 'rgba(30,30,30,.35)';
+					g.stroke();
+				}
+			});
+			const soilTex = canvasTex(256, 256, (g, w, h) => {
+				g.fillStyle = '#5b4330';
+				g.fillRect(0, 0, w, h);
+				for (let i = 0; i < 4000; i++) {
+					g.fillStyle = ['#4a3626', '#6e5340', '#3b2a1d', '#7a6450'][i % 4];
+					g.fillRect(rnd() * w, rnd() * h, 2, 2);
+				}
+				for (let i = 0; i < 60; i++) {
+					g.fillStyle = '#8a7a68';
+					g.beginPath();
+					g.arc(rnd() * w, rnd() * h, 1 + rnd() * 3, 0, 7);
+					g.fill();
+				}
+			});
+			const floorTex = canvasTex(
+				512,
+				512,
+				(g, w, h) => {
+					g.fillStyle = '#e4e7ea';
+					g.fillRect(0, 0, w, h);
+					for (let i = 0; i < 2600; i++) {
+						g.fillStyle = ['#5577aa', '#9aa9b8', '#c3ccd4', '#3d5f94'][i % 4];
+						g.globalAlpha = 0.35 + rnd() * 0.4;
+						g.fillRect(rnd() * w, rnd() * h, 1.6, 1.6);
+					}
+					g.globalAlpha = 1;
+				},
+				[8, 7],
+			);
+
+			/* ---------- labels ---------- */
+			const labels = new THREE.Group(),
+				rays = new THREE.Group(),
+				cables = new THREE.Group(),
+				dims = new THREE.Group();
+			scene.add(labels, rays, cables, dims);
+
+			function tag(lines, { size = 0.2, accent = '#d9822b' } = {}) {
+				const L = Array.isArray(lines) ? lines : [lines];
+				const c = document.createElement('canvas');
+				const g = c.getContext('2d');
+				const f0 = '700 46px "Golos Text",sans-serif',
+					f1 = '500 33px "JetBrains Mono",monospace';
+				let mw = 0;
+				L.forEach((t, i) => {
+					g.font = i ? f1 : f0;
+					mw = Math.max(mw, g.measureText(t).width);
+				});
+				const lh0 = 58,
+					lh1 = 44,
+					py = 18,
+					px = 26;
+				const W = Math.ceil(mw) + px * 2 + 10,
+					H = py * 2 + lh0 + (L.length - 1) * lh1;
+				c.width = W;
+				c.height = H;
+				g.save();
+				g.beginPath();
+				g.roundRect(0, 0, W, H, 14);
+				g.clip();
+				g.fillStyle = 'rgba(255,255,255,0.94)';
+				g.fillRect(0, 0, W, H);
+				g.fillStyle = accent;
+				g.fillRect(0, 0, 10, H);
+				g.restore();
+				g.textBaseline = 'middle';
+				L.forEach((t, i) => {
+					g.font = i ? f1 : f0;
+					g.fillStyle = i ? '#4b5966' : '#14202b';
+					g.fillText(t, px + 10, py + (i ? lh0 + (i - 0.5) * lh1 : lh0 / 2));
+				});
+				const tex = new THREE.CanvasTexture(c);
+				tex.colorSpace = THREE.SRGBColorSpace;
+				tex.anisotropy = 8;
+				const s = new THREE.Sprite(
+					new THREE.SpriteMaterial({
+						map: tex,
+						depthTest: false,
+						depthWrite: false,
+					}),
+				);
+				const k = size / lh0;
+				s.scale.set(W * k, H * k);
+				s.center.set(0.5, 0);
+				s.renderOrder = 20;
+				return s;
+			}
+			function floorText(
+				txt,
+				x,
+				z,
+				h = 0.3,
+				color = '#2c4257',
+				rotZ = 0,
+				weight = 600,
+			) {
+				const fs = 96,
+					c = document.createElement('canvas'),
+					g = c.getContext('2d');
+				const font = `${weight} ${fs}px "Golos Text",sans-serif`;
+				g.font = font;
+				const w = Math.ceil(g.measureText(txt).width) + 24;
+				c.width = w;
+				c.height = Math.round(fs * 1.3);
+				g.font = font;
+				g.fillStyle = color;
+				g.textAlign = 'center';
+				g.textBaseline = 'middle';
+				g.fillText(txt, w / 2, c.height / 2);
+				const t = new THREE.CanvasTexture(c);
+				t.colorSpace = THREE.SRGBColorSpace;
+				t.anisotropy = 8;
+				const m = new THREE.Mesh(
+					new THREE.PlaneGeometry((h * w) / c.height, h),
+					new THREE.MeshBasicMaterial({
+						map: t,
+						transparent: true,
+						depthWrite: false,
+					}),
+				);
+				m.rotation.set(-Math.PI / 2, 0, rotZ);
+				m.position.set(x, 0.006, z);
+				m.renderOrder = 2;
+				return m;
+			}
+
+			/* ---------- room, floor, grid ---------- */
+			const RX0 = -8,
+				RX1 = 8,
+				RZ0 = -9,
+				RZ1 = 4.6;
+			const floor = new THREE.Mesh(
+				new THREE.PlaneGeometry(RX1 - RX0, RZ1 - RZ0),
+				M(0xffffff, 0.85, 0, { map: floorTex }),
+			);
+			floor.rotation.x = -Math.PI / 2;
+			floor.position.set(0, 0, (RZ0 + RZ1) / 2);
+			floor.receiveShadow = true;
+			scene.add(floor);
+			const wallMat = M(0xeceeef, 0.9, 0, { side: THREE.DoubleSide });
+			projectTexture('Basic Specks.png', floor.material, [8, 7]);
+			projectTexture('Marble Texture.png', wallMat, [4, 1]);
+			const skirt = M(0xa77e5a, 0.6, 0);
+			const wBack = mesh(
+				new THREE.PlaneGeometry(RX1 - RX0, 3.2),
+				wallMat,
+				0,
+				1.6,
+				RZ0,
+			);
+			scene.add(wBack);
+			const wL = mesh(
+				new THREE.PlaneGeometry(RZ1 - RZ0, 3.2),
+				wallMat,
+				RX0,
+				1.6,
+				(RZ0 + RZ1) / 2,
+			);
+			wL.rotation.y = Math.PI / 2;
+			scene.add(wL);
+			const wR = mesh(
+				new THREE.PlaneGeometry(RZ1 - RZ0, 3.2),
+				wallMat,
+				RX1,
+				1.6,
+				(RZ0 + RZ1) / 2,
+			);
+			wR.rotation.y = -Math.PI / 2;
+			scene.add(wR);
+			scene.add(
+				B(RX1 - RX0, 0.08, 0.02, skirt, 0, 0.04, RZ0 + 0.01),
+				B(0.02, 0.08, RZ1 - RZ0, skirt, RX0 + 0.01, 0.04, (RZ0 + RZ1) / 2),
+				B(0.02, 0.08, RZ1 - RZ0, skirt, RX1 - 0.01, 0.04, (RZ0 + RZ1) / 2),
+			);
+
+			const gp = { minor: [], major: [], five: [] };
+			const cat = (v) =>
+				Math.abs(v % 5) < 1e-6
+					? 'five'
+					: Math.abs(v % 1) < 1e-6
+						? 'major'
+						: 'minor';
+			for (let x = RX0; x <= RX1 + 1e-6; x += 0.5)
+				gp[cat(x)].push(V(x, 0.004, RZ0), V(x, 0.004, RZ1));
+			for (let z = -9; z <= 4.5 + 1e-6; z += 0.5)
+				gp[cat(z)].push(V(RX0, 0.004, z), V(RX1, 0.004, z));
+			const gcol = {
+				minor: [0x8fa2b3, 0.35],
+				major: [0x4f6679, 0.6],
+				five: [0x1f3d5c, 0.95],
+			};
+			for (const k in gp) {
+				const l = new THREE.LineSegments(
+					new THREE.BufferGeometry().setFromPoints(gp[k]),
+					new THREE.LineBasicMaterial({
+						color: gcol[k][0],
+						transparent: true,
+						opacity: gcol[k][1],
+					}),
+				);
+				scene.add(l);
+			}
+			for (let x = -7; x <= 7; x++) {
+				scene.add(floorText(String(x).replace('-', '−'), x, 4.15, 0.3));
+			}
+			for (let z = 0; z >= -8; z--) {
+				scene.add(
+					floorText(`${-z} м`, -7.45, z - 0.22, 0.3, '#1f3d5c', 0, 700),
+				);
+			}
+			for (let z = 1; z <= 4; z++) {
+				scene.add(floorText(`−${z}`, -7.45, z - 0.22, 0.26, '#5a6f82'));
+			}
+			scene.add(
+				floorText('X, м (поперёк оси пучка)', 0, 4.42, 0.2, '#5a6f82', 0, 500),
+			);
+			scene.add(
+				floorText(
+					'Расстояние от miniGen, м',
+					-7.82,
+					-4,
+					0.2,
+					'#5a6f82',
+					Math.PI / 2,
+					500,
+				),
+			);
+
+			/* ---------- lighting ---------- */
+			scene.add(new THREE.HemisphereLight(0xffffff, 0x8d939b, 1.05));
+			const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+			sun.position.set(5, 14, 6);
+			sun.target.position.set(0, 0, -2.5);
+			sun.castShadow = true;
+			sun.shadow.mapSize.set(2048, 2048);
+			Object.assign(sun.shadow.camera, {
+				left: -11,
+				right: 11,
+				top: 11,
+				bottom: -11,
+				near: 1,
+				far: 40,
+			});
+			sun.shadow.bias = -0.0004;
+			scene.add(sun, sun.target);
+
+			/* ---------- cart on casters ---------- */
+			function cart(w, d, h, modelFile = 'stand_2_shelves.glb') {
+				const g = new THREE.Group();
+				g.add(B(w, 0.03, d, deck, 0, h, 0));
+				g.add(B(w - 0.02, 0.025, d - 0.02, deck, 0, 0.21, 0));
+				const ix = w / 2 - 0.03,
+					iz = d / 2 - 0.03;
+				for (const sx of [-1, 1])
+					for (const sz of [-1, 1]) {
+						g.add(
+							C(
+								0.016,
+								h - 0.12,
+								steel,
+								sx * ix,
+								0.12 + (h - 0.12) / 2,
+								sz * iz,
+								12,
+							),
+						);
+						g.add(B(0.05, 0.035, 0.05, dark, sx * ix, 0.105, sz * iz));
+						const wh = C(0.045, 0.03, rubber, sx * ix, 0.047, sz * iz, 20);
+						wh.rotation.z = Math.PI / 2;
+						g.add(wh);
+						const hub = C(0.016, 0.034, steel, sx * ix, 0.047, sz * iz, 12);
+						hub.rotation.z = Math.PI / 2;
+						g.add(hub);
+					}
+				for (const sx of [-1, 1])
+					g.add(
+						C(0.011, 0.2, steel, sx * w * 0.38, h + 0.1, d / 2 + 0.015, 10),
+					);
+				g.add(B(w * 0.78, 0.022, 0.022, steel, 0, h + 0.2, d / 2 + 0.015));
+				projectModel(g, modelFile, [w, h + 0.015, d], [0, (h + 0.015) / 2, 0]);
+				return g;
+			}
+
+			/* ---------- geometry of the setup ---------- */
+			const TZ = -6.25,
+				WZ = -5.6,
+				T = V(0, 0.2, TZ);
+
+			/* soil wall 1x1x0.35 */
+			const wall = new THREE.Group();
+			scene.add(wall);
+			const lmat = [sandTex, gravelTex, soilTex].map((t) =>
+				M(0xffffff, 0.95, 0, { map: t }),
+			);
+			const LH = 1 / 6;
+			for (let i = 0; i < 6; i++)
+				wall.add(
+					B(1.0, LH - 0.002, 0.35, lmat[i % 3], 0, 0.025 + LH / 2 + i * LH, WZ),
+				);
+			const frameM = M(0x4c5660, 0.45, 0.6);
+			for (const sx of [-1, 1])
+				for (const sz of [-1, 1])
+					wall.add(
+						B(0.04, 1.07, 0.04, frameM, sx * 0.52, 0.535, WZ + sz * 0.195),
+					);
+			for (const y of [0.0125, 1.04])
+				for (const sz of [-1, 1])
+					wall.add(B(1.08, 0.025, 0.04, frameM, 0, y, WZ + sz * 0.195));
+			for (const sx of [-1, 1]) {
+				const p = B(
+					0.004,
+					1.0,
+					0.35,
+					M(0xcfe6f2, 0.1, 0, { transparent: true, opacity: 0.18 }),
+					sx * 0.502,
+					0.525,
+					WZ,
+				);
+				p.castShadow = false;
+				wall.add(p);
+			}
+			for (const sx of [-1, 1])
+				wall.add(B(0.08, 0.02, 0.6, frameM, sx * 0.52, 0.01, WZ));
+
+			/* sand tray with mines and explosives */
+			const tray = new THREE.Group();
+			scene.add(tray);
+			const wood = M(0x9c7650, 0.75, 0);
+			tray.add(
+				B(1.1, 0.12, 0.04, wood, 0, 0.06, TZ + 0.38),
+				B(1.1, 0.12, 0.04, wood, 0, 0.06, TZ - 0.38),
+				B(0.04, 0.12, 0.8, wood, 0.53, 0.06, TZ),
+				B(0.04, 0.12, 0.8, wood, -0.53, 0.06, TZ),
+			);
+			tray.add(
+				B(1.02, 0.1, 0.72, M(0xffffff, 0.95, 0, { map: sandTex }), 0, 0.05, TZ),
+			);
+			const Y0 = 0.1;
+			// TM-62M
+			const mine = new THREE.Group();
+			tray.add(mine);
+			const olive = M(0x4d5a3a, 0.55, 0.35),
+				oliveP = M(0x3f4a30, 0.8, 0);
+			mine.add(
+				C(0.16, 0.1, olive, 0, Y0 + 0.05, TZ, 40),
+				C(0.163, 0.015, olive, 0, Y0 + 0.093, TZ, 40),
+			);
+			mine.add(
+				C(0.055, 0.025, M(0x5a6346, 0.5, 0.4), 0, Y0 + 0.112, TZ, 24),
+				C(0.03, 0.02, black, 0, Y0 + 0.132, TZ, 20),
+			);
+			projectModel(
+				mine,
+				'landmine.glb',
+				[0.326, 0.142, 0.326],
+				[0, Y0 + 0.071, TZ],
+			);
+			// PMN-2
+			const pmnX = -0.33,
+				pmnZ = TZ + 0.18;
+			tray.add(C(0.0605, 0.054, oliveP, pmnX, Y0 + 0.027, pmnZ, 32));
+			tray.add(
+				B(0.1, 0.008, 0.022, rubber, pmnX, Y0 + 0.058, pmnZ),
+				B(0.022, 0.008, 0.1, rubber, pmnX, Y0 + 0.058, pmnZ),
+			);
+			tray.add(
+				B(
+					0.02,
+					0.02,
+					0.04,
+					M(0x7a7f6a, 0.5, 0.4),
+					pmnX + 0.07,
+					Y0 + 0.02,
+					pmnZ,
+				),
+			);
+			// TNT 400 g blocks
+			const tntM = M(0xc9a96a, 0.85, 0);
+			tray.add(
+				B(0.1, 0.05, 0.05, tntM, 0.33, Y0 + 0.025, TZ + 0.2),
+				B(0.1, 0.05, 0.05, tntM, 0.33, Y0 + 0.075, TZ + 0.2),
+			);
+			tray.add(C(0.006, 0.004, black, 0.33, Y0 + 0.101, TZ + 0.2, 12));
+			// C-4 M112
+			tray.add(
+				B(
+					0.279,
+					0.025,
+					0.051,
+					M(0x5d6748, 0.4, 0.15),
+					0.3,
+					Y0 + 0.0125,
+					TZ - 0.2,
+				),
+			);
+
+			/* ---------- miniGen on its cart ---------- */
+			const GEN = { x: 0, z: 0, w: 0.6, d: 0.5, h: 0.75 };
+			const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_3_shelves.glb');
+			genCart.position.set(GEN.x, 0, GEN.z);
+			scene.add(genCart);
+			genCart.add(
+				B(0.2, 0.08, 0.15, dark, -0.13, 0.264, 0),
+				B(0.22, 0.07, 0.18, M(0x5c6670, 0.5, 0.3), 0.14, 0.259, 0),
+			);
+			const genPivot = new THREE.Group();
+			genPivot.position.set(GEN.x, GEN.h + 0.015 + 0.14, GEN.z);
+			scene.add(genPivot);
+			{
+				const silver = M(0xc8cdd2, 0.35, 0.6),
+					blue = M(0x1f5fa0, 0.45, 0.3);
+				genPivot.add(
+					B(0.108, 0.203, 0.254, silver, 0, 0, 0),
+					B(0.11, 0.03, 0.256, blue, 0, 0.06, 0),
+				);
+				genPivot.add(B(0.16, 0.04, 0.3, dark, 0, -0.12, 0));
+				const yel = M(0xf2c418, 0.5, 0);
+				genPivot.add(B(0.07, 0.07, 0.003, yel, 0, 0, 0.128));
+				const tre = C(0.012, 0.004, black, 0, 0, 0.13, 16);
+				tre.rotation.x = Math.PI / 2;
+				genPivot.add(tre);
+				for (const sx of [-1, 1])
+					genPivot.add(CZ(0.014, 0.03, steel, sx * 0.025, -0.04, -0.142, 16));
+				genPivot.add(C(0.008, 0.015, red, 0.035, 0.109, -0.08, 12));
+			}
+			projectModel(
+				genPivot,
+				'minGen.glb',
+				[0.22, 0.26, 0.3],
+				[0, -0.01, 0],
+				Math.PI,
+			);
+			genPivot.rotation.y = Math.atan2(T.x - GEN.x, T.z - GEN.z);
+			scene.updateMatrixWorld(true);
+			const E = genPivot.localToWorld(V(0, 0, 0.1));
+			const genBack = genPivot.localToWorld(V(0, -0.04, -0.16));
+
+			/* ---------- detector heads (built facing +Z) ---------- */
+			function headLaBr() {
+				const g = new THREE.Group();
+				g.add(
+					CZ(0.06, 0.13, lead, 0, 0, 0.11, 32),
+					CZ(0.046, 0.02, alu, 0, 0, 0.185, 32),
+					CZ(0.036, 0.2, M(0x8d949b, 0.35, 0.7), 0, 0, -0.06, 28),
+					B(0.07, 0.07, 0.08, dark, 0, 0, -0.2),
+				);
+				return { g, front: 0.195, back: -0.24 };
+			}
+			function headHPGe() {
+				const g = new THREE.Group();
+				g.add(
+					CZ(0.042, 0.24, alu, 0, 0, 0.1, 32),
+					B(0.08, 0.06, 0.1, dark, 0, -0.06, -0.05),
+					B(0.17, 0.17, 0.24, M(0x3b434c, 0.5, 0.35), 0, 0, -0.2),
+				);
+				for (let i = 0; i < 5; i++)
+					g.add(B(0.172, 0.006, 0.2, steel, 0, -0.06 + i * 0.03, -0.2));
+				return { g, front: 0.22, back: -0.32 };
+			}
+			function headHe3() {
+				const g = new THREE.Group();
+				g.add(B(0.3, 0.24, 0.45, hdpe, 0, 0, 0));
+				for (const x of [-0.08, 0, 0.08])
+					g.add(
+						CZ(0.0127, 0.07, steel, x, 0, -0.255, 16),
+						B(0.04, 0.05, 0.04, dark, x, 0, -0.31),
+					);
+				return { g, front: 0.225, back: -0.33 };
+			}
+			function headEJ() {
+				const g = new THREE.Group();
+				g.add(
+					CZ(0.064, 0.127, M(0x2a2d31, 0.4, 0.5), 0, 0, 0.1, 32),
+					CZ(0.062, 0.004, M(0x9fb6c4, 0.2, 0.2), 0, 0, 0.166, 32),
+					CZ(0.045, 0.22, black, 0, 0, -0.07, 28),
+					B(0.06, 0.06, 0.05, dark, 0, 0, -0.2),
+				);
+				return { g, front: 0.168, back: -0.23 };
+			}
+			function headXray(col) {
+				const g = new THREE.Group();
+				g.add(
+					B(0.07, 0.1, 0.11, M(col, 0.45, 0.35), 0, 0, -0.02),
+					CZ(0.012, 0.09, steel, 0, 0.02, 0.08, 16),
+					CZ(0.02, 0.03, lead, 0, 0.02, 0.14, 20),
+				);
+				return { g, front: 0.155, back: -0.08 };
+			}
+
+			const COL = {
+				gamma: 0x2a9d4b,
+				neutron: 0x2f6fd6,
+				xray: 0x8a4fd8,
+				beam: 0xe3a21a,
+			};
+			const HEX = (n) => '#' + n.toString(16).padStart(6, '0');
+			const DEV = [
+				{
+					id: 'g1',
+					kind: 'gamma',
+					name: 'Гамма · LaBr₃(Ce) 3″×3″',
+					sub: 'сцинтиллятор + свинцовый коллиматор',
+					x: -5,
+					z: 0,
+					w: 0.55,
+					d: 0.45,
+					h: 0.72,
+					mast: 0.24,
+					head: headLaBr,
+					cab: ['sig', 'hv'],
+				},
+				{
+					id: 'g2',
+					kind: 'gamma',
+					name: 'Гамма · HPGe',
+					sub: 'коакс. Ge, электроохлаждение',
+					x: 5,
+					z: 0,
+					w: 0.6,
+					d: 0.55,
+					h: 0.68,
+					mast: 0.28,
+					head: headHPGe,
+					cab: ['sig', 'hv', 'pwr'],
+				},
+				{
+					id: 'n1',
+					kind: 'neutron',
+					name: 'Нейтроны · ³He ×3 в HDPE',
+					sub: 'тепловые / надтепловые',
+					x: -3.5,
+					z: -2.5,
+					w: 0.55,
+					d: 0.6,
+					h: 0.6,
+					mast: 0.18,
+					head: headHe3,
+					cab: ['sig', 'hv'],
+				},
+				{
+					id: 'n2',
+					kind: 'neutron',
+					name: 'Нейтроны · EJ‑309 5″×5″',
+					sub: 'быстрые, n/γ‑дискриминация',
+					x: 3.5,
+					z: -2.5,
+					w: 0.5,
+					d: 0.45,
+					h: 0.72,
+					mast: 0.24,
+					head: headEJ,
+					cab: ['sig', 'hv'],
+				},
+				{
+					id: 'x1',
+					kind: 'xray',
+					name: 'Рентген · CdTe',
+					sub: 'Amptek X‑123, W‑коллиматор',
+					x: -1.6,
+					z: -6.0,
+					w: 0.45,
+					d: 0.4,
+					h: 0.3,
+					mast: 0.12,
+					head: () => headXray(0x2f3a45),
+					cab: ['eth', 'pwr'],
+				},
+				{
+					id: 'x2',
+					kind: 'xray',
+					name: 'Рентген · SDD',
+					sub: 'Amptek FAST SDD',
+					x: 1.6,
+					z: -6.0,
+					w: 0.45,
+					d: 0.4,
+					h: 0.3,
+					mast: 0.12,
+					head: () => headXray(0x4a2f66),
+					cab: ['eth', 'pwr'],
+				},
+			];
+			const CAB = {
+				sig: { c: 0xe8b923, name: 'Сигнал детектора → оцифровщик', y: 1.42 },
+				hv: {
+					c: 0xd23b2f,
+					name: 'Высокое напряжение (SHV) ← ВВ‑крейт',
+					y: 1.15,
+				},
+				eth: {
+					c: 0x2c7be5,
+					name: 'Ethernet / управление → коммутатор',
+					y: 1.73,
+				},
+				pwr: { c: 0x2a2d31, name: 'Питание 24 В / 230 В ← PDU/UPS', y: 0.495 },
+				ttl: {
+					c: 0xef7d1a,
+					name: 'TTL‑синхроимпульс и интерлок miniGen',
+					y: 1.585,
+				},
+			};
+
+			for (const D of DEV) {
+				const ct = cart(D.w, D.d, D.h);
+				ct.position.set(D.x, 0, D.z);
+				scene.add(ct);
+				ct.add(C(0.02, D.mast, steel, 0, D.h + 0.015 + D.mast / 2, 0, 14));
+				const pivot = new THREE.Group();
+				pivot.position.set(D.x, D.h + 0.015 + D.mast, D.z);
+				scene.add(pivot);
+				const h = D.head();
+				const headBounds = new THREE.Box3().setFromObject(h.g),
+					headSize = headBounds.getSize(new THREE.Vector3());
+				projectModel(
+					h.g,
+					'detector.glb',
+					headSize.toArray(),
+					headBounds.getCenter(new THREE.Vector3()).toArray(),
+					Math.PI,
+				);
+				const tilt = new THREE.Group();
+				tilt.add(h.g);
+				pivot.add(tilt);
+				const dx = T.x - D.x,
+					dz = T.z - D.z,
+					dy = T.y - pivot.position.y;
+				pivot.rotation.y = Math.atan2(dx, dz);
+				tilt.rotation.x = Math.atan2(-dy, Math.hypot(dx, dz));
+				pivot.updateMatrixWorld(true);
+				D.front = tilt.localToWorld(V(0, 0, h.front));
+				D.back = tilt.localToWorld(V(0, 0, h.back));
+				D.top = D.h;
+				D.pivotY = pivot.position.y;
+				D.L = Math.hypot(D.x - T.x, D.z - T.z);
+				D.alpha = (Math.atan2(Math.abs(D.x - T.x), D.z - T.z) * 180) / Math.PI;
+				const coord = `x ${D.x.toFixed(1).replace('-', '−')} · d ${(-D.z).toFixed(1)} м`;
+				scene.add(
+					floorText(coord, D.x, D.z + D.d / 2 + 0.3, 0.15, '#33485c', 0, 600),
+				);
+				// footprint marks
+				const fp = [
+					V(-D.w / 2, 0, -D.d / 2),
+					V(D.w / 2, 0, -D.d / 2),
+					V(D.w / 2, 0, D.d / 2),
+					V(-D.w / 2, 0, D.d / 2),
+					V(-D.w / 2, 0, -D.d / 2),
+				].map((p) => p.add(V(D.x, 0.007, D.z)).multiply(V(1, 1, 1)));
+				const fpl = new THREE.Line(
+					new THREE.BufferGeometry().setFromPoints(
+						fp.map((p) =>
+							V(
+								p.x + (p.x > D.x ? 0.06 : -0.06),
+								p.y,
+								p.z + (p.z > D.z ? 0.06 : -0.06),
+							),
+						),
+					),
+					new THREE.LineBasicMaterial({ color: COL[D.kind] }),
+				);
+				scene.add(fpl);
+				const lb = tag(
+					[D.name, `L ${D.L.toFixed(2)} м · α ${D.alpha.toFixed(0)}°`],
+					{ size: 0.17, accent: HEX(COL[D.kind]) },
+				);
+				lb.position.set(D.x, D.pivotY + 0.32, D.z);
+				labels.add(lb);
+			}
+			scene.add(
+				floorText(
+					'x 0.0 · d 0.0 м',
+					0,
+					GEN.d / 2 + 0.3,
+					0.15,
+					'#33485c',
+					0,
+					600,
+				),
+			);
+
+			/* ---------- server rack at right wall ---------- */
+			const RK = { x0: 6.95, depth: 1.0, z: -2.0, w: 0.6, h: 2.0 };
+			const rack = new THREE.Group();
+			scene.add(rack);
+			const rackM = M(0x1b1f24, 0.5, 0.4);
+			const rcx = RK.x0 + RK.depth / 2;
+			rack.add(
+				B(RK.depth, RK.h, 0.02, rackM, rcx, RK.h / 2, RK.z - RK.w / 2 + 0.01),
+				B(RK.depth, RK.h, 0.02, rackM, rcx, RK.h / 2, RK.z + RK.w / 2 - 0.01),
+			);
+			rack.add(
+				B(RK.depth, 0.04, RK.w, rackM, rcx, RK.h - 0.02, RK.z),
+				B(RK.depth, 0.08, RK.w, rackM, rcx, 0.04, RK.z),
+				B(0.02, RK.h, RK.w, rackM, RK.x0 + RK.depth - 0.01, RK.h / 2, RK.z),
+			);
+			for (const sz of [-1, 1])
+				rack.add(
+					B(
+						0.03,
+						RK.h - 0.1,
+						0.03,
+						M(0x8a9097, 0.4, 0.7),
+						RK.x0 + 0.04,
+						RK.h / 2,
+						RK.z + sz * 0.25,
+					),
+				);
+			const units = [
+				[0.1, 0.27, 0x2a2e33, 'UPS 3 кВА', 3, 0x37c26b],
+				[0.45, 0.09, 0x202326, 'PDU', 6, 0xffb02e],
+				[0.6, 0.13, 0x3a4047, 'DAQ‑сервер', 4, 0x37c26b],
+				[0.76, 0.13, 0x3a4047, 'Сервер анализа спектров', 4, 0x37c26b],
+				[1.0, 0.3, 0x9aa3ab, 'ВВ‑крейт NIM', 8, 0xff4b3a],
+				[1.36, 0.12, 0x1f5e9c, 'Оцифровщик 16 кан.', 8, 0x37c26b],
+				[1.54, 0.09, 0x4a525a, 'Пульт miniGen / интерлок', 3, 0xffb02e],
+				[1.7, 0.06, 0x23272c, 'Коммутатор 24 порта', 10, 0x37c26b],
+				[1.79, 0.05, 0x30353b, 'Патч‑панель', 0, 0],
+			];
+			for (const [yb, uh, c, , nl, lc] of units) {
+				rack.add(
+					B(
+						0.8,
+						uh - 0.006,
+						0.5,
+						M(c, 0.45, 0.45),
+						RK.x0 + 0.44,
+						yb + uh / 2,
+						RK.z,
+					),
+				);
+				const lm = new THREE.MeshBasicMaterial({ color: lc || 0x000000 });
+				for (let i = 0; i < nl; i++) {
+					const l = new THREE.Mesh(
+						new THREE.BoxGeometry(0.005, 0.012, 0.012),
+						lm,
+					);
+					l.position.set(
+						RK.x0 + 0.038,
+						yb + uh * 0.6,
+						RK.z - 0.2 + i * (0.4 / Math.max(nl - 1, 1)),
+					);
+					rack.add(l);
+				}
+			}
+			{
+				const lb = tag(
+					['Серверная стойка 42U', 'UPS · DAQ · ВВ · оцифровщик · LAN'],
+					{ size: 0.17, accent: '#16212c' },
+				);
+				lb.position.set(rcx, RK.h + 0.15, RK.z);
+				labels.add(lb);
+			}
+
+			/* ---------- cables ---------- */
+			const ZT = 1.9,
+				XT = 6.45,
+				nodes = [
+					{
+						x: GEN.x,
+						z: GEN.z,
+						d: GEN.d,
+						top: GEN.h,
+						back: genBack,
+						cab: ['eth', 'pwr', 'ttl'],
+					},
+					...DEV.map((D) => ({
+						x: D.x,
+						z: D.z,
+						d: D.d,
+						top: D.top,
+						back: D.back,
+						cab: D.cab,
+					})),
+				];
+			const total = nodes.reduce((a, n) => a + n.cab.length, 0);
+			let gi = 0;
+			// floor cable protector along trunk
+			const trayM = M(0x2e3339, 0.7, 0.1);
+			const yb = M(0xf0c419, 0.6, 0);
+			const xMin = Math.min(...nodes.map((n) => n.x)) - 0.3;
+			cables.add(
+				B(
+					XT - xMin + 0.3,
+					0.012,
+					0.52,
+					trayM,
+					(XT + xMin) / 2 + 0.15,
+					0.006,
+					ZT,
+				),
+			);
+			cables.add(
+				B(0.52, 0.012, ZT - RK.z + 0.3, trayM, XT, 0.006, (ZT + RK.z) / 2),
+			);
+			cables.add(
+				B(
+					XT - xMin + 0.3,
+					0.014,
+					0.03,
+					yb,
+					(XT + xMin) / 2 + 0.15,
+					0.007,
+					ZT + 0.275,
+				),
+				B(
+					XT - xMin + 0.3,
+					0.014,
+					0.03,
+					yb,
+					(XT + xMin) / 2 + 0.15,
+					0.007,
+					ZT - 0.275,
+				),
+			);
+			for (const n of nodes) {
+				n.cab.forEach((k, j) => {
+					const o = (j - (n.cab.length - 1) / 2) * 0.03,
+						zo = (gi - (total - 1) / 2) * 0.024,
+						zr = RK.z + (gi - (total - 1) / 2) * 0.028,
+						y = 0.018;
+					const yU = CAB[k].y,
+						rearZ = n.z + n.d / 2 + 0.05;
+					const pts = [
+						n.back.clone(),
+						V(n.x + o, n.top + 0.04, rearZ),
+						V(n.x + o, y, rearZ),
+						V(n.x + o, y, ZT + zo),
+						V(XT - zo, y, ZT + zo),
+						V(XT - zo, y, zr),
+						V(RK.x0 - 0.06, y, zr),
+						V(RK.x0 - 0.06, yU, zr),
+						V(RK.x0 + 0.03, yU, zr),
+					];
+					const path = new THREE.CurvePath();
+					for (let i = 0; i < pts.length - 1; i++)
+						path.add(new THREE.LineCurve3(pts[i], pts[i + 1]));
+					const tube = new THREE.Mesh(
+						new THREE.TubeGeometry(path, 600, 0.011, 6, false),
+						M(CAB[k].c, 0.5, 0.1),
+					);
+					tube.castShadow = true;
+					cables.add(tube);
+					gi++;
+				});
+			}
+
+			/* ---------- radiation: beam, returns, particles ---------- */
+			{
+				const dir = T.clone().sub(E);
+				const len = dir.length();
+				const cone = new THREE.Mesh(
+					new THREE.CylinderGeometry(0.5, 0.015, len, 40, 1, true),
+					new THREE.MeshBasicMaterial({
+						color: COL.beam,
+						transparent: true,
+						opacity: 0.13,
+						depthWrite: false,
+						side: THREE.DoubleSide,
+					}),
+				);
+				cone.position.copy(E).addScaledVector(dir, 0.5);
+				cone.quaternion.setFromUnitVectors(V(0, 1, 0), dir.clone().normalize());
+				rays.add(cone);
+				const axis = new THREE.Line(
+					new THREE.BufferGeometry().setFromPoints([E, T]),
+					new THREE.LineBasicMaterial({ color: COL.beam }),
+				);
+				rays.add(axis);
+			}
+			const streams = [];
+			function stream(a, b, col, n, spread, speed, size) {
+				const pos = new Float32Array(n * 3);
+				const geo = new THREE.BufferGeometry();
+				geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+				const pts = new THREE.Points(
+					geo,
+					new THREE.PointsMaterial({
+						color: col,
+						size,
+						sizeAttenuation: true,
+						transparent: true,
+						opacity: 0.95,
+						depthWrite: false,
+					}),
+				);
+				rays.add(pts);
+				const off = [...Array(n)].map(() => [
+					rnd(),
+					(rnd() - 0.5) * 2,
+					(rnd() - 0.5) * 2,
+				]);
+				streams.push({ a, b, n, pos, geo, off, spread, speed });
+			}
+			stream(E, T, COL.beam, 160, 0.45, 0.35, 0.07);
+			for (const D of DEV) {
+				rays.add(
+					new THREE.Line(
+						new THREE.BufferGeometry().setFromPoints([T, D.front]),
+						new THREE.LineBasicMaterial({
+							color: COL[D.kind],
+							transparent: true,
+							opacity: 0.6,
+						}),
+					),
+				);
+				stream(T, D.front, COL[D.kind], 14, 0.04, 0.5, 0.06);
+			}
+			const tmp = V(0, 0, 0);
+			function tickStreams(t) {
+				for (const s of streams) {
+					for (let i = 0; i < s.n; i++) {
+						const [ph, u, v] = s.off[i];
+						const f = (ph + t * s.speed) % 1;
+						tmp.copy(s.a).lerp(s.b, f);
+						tmp.x += u * s.spread * f;
+						tmp.y += v * s.spread * f * 0.6;
+						s.pos[i * 3] = tmp.x;
+						s.pos[i * 3 + 1] = tmp.y;
+						s.pos[i * 3 + 2] = tmp.z;
+					}
+					s.geo.attributes.position.needsUpdate = true;
+				}
+			}
+
+			/* ---------- labels for source, wall, targets ---------- */
+			{
+				const l = tag(['miniGen · D‑T 14 МэВ', '3·10⁸ н/с · 24 В · 45 Вт'], {
+					size: 0.18,
+					accent: HEX(COL.beam),
+				});
+				l.position.set(GEN.x, 1.3, GEN.z);
+				labels.add(l);
+			}
+			{
+				const l = tag(['Стенка 1×1×0,35 м', 'песок · щебень · грунт ×2'], {
+					size: 0.15,
+					accent: '#8a6a45',
+				});
+				l.position.set(-1.05, 1.1, WZ);
+				labels.add(l);
+			}
+			const mineTags = [
+				['ТМ‑62М', 0, 0.3, TZ],
+				['ПМН‑2', pmnX, 0.2, pmnZ],
+				['ТНТ 2×400 г', 0.36, 0.24, TZ + 0.2],
+				['C‑4 M112', 0.32, 0.18, TZ - 0.22],
+			];
+			for (const [t, x, y, z] of mineTags) {
+				const l = tag([t], { size: 0.085, accent: '#4d5a3a' });
+				l.position.set(x, y, z);
+				labels.add(l);
+			}
+
+			/* ---------- dimensions ---------- */
+			function dimLine(a, b, text, col = 0x34506b) {
+				const l = new THREE.Line(
+					new THREE.BufferGeometry().setFromPoints([a, b]),
+					new THREE.LineDashedMaterial({
+						color: col,
+						dashSize: 0.14,
+						gapSize: 0.08,
+					}),
+				);
+				l.computeLineDistances();
+				dims.add(l);
+				for (const p of [a, b]) {
+					const m = new THREE.Mesh(
+						new THREE.CircleGeometry(0.05, 16),
+						new THREE.MeshBasicMaterial({ color: col }),
+					);
+					m.rotation.x = -Math.PI / 2;
+					m.position.copy(p);
+					dims.add(m);
+				}
+				const s = tag([text], { size: 0.12, accent: HEX(col) });
+				s.position.copy(a).lerp(b, 0.5);
+				s.position.y = 0.03;
+				dims.add(s);
+			}
+			const fy = 0.012;
+			dimLine(
+				V(0.75, fy, 0),
+				V(0.75, fy, TZ),
+				'miniGen → цель 6,25 м',
+				0x8a5a12,
+			);
+			dimLine(
+				V(-0.75, fy, 0),
+				V(-0.75, fy, WZ + 0.175),
+				'до стенки 5,43 м',
+				0x6b4f30,
+			);
+			for (const D of DEV.filter((d) => d.kind !== 'xray'))
+				dimLine(
+					V(T.x, fy, T.z),
+					V(D.x, fy, D.z),
+					`${D.L.toFixed(2)} м`,
+					COL[D.kind],
+				);
+			dimLine(V(0, fy, 0.75), V(-5, fy, 0.75), '5,0 м');
+			dimLine(V(0, fy, 0.75), V(5, fy, 0.75), '5,0 м');
+
+			/* ---------- cameras & controls ---------- */
+			const persp = new THREE.PerspectiveCamera(42, 1, 0.05, 200);
+			persp.position.set(2.2, 8.2, 10.8);
+			const pc = new OrbitControls(persp, renderer.domElement);
+			pc.target.set(0, 0.4, -2.6);
+			pc.enableDamping = true;
+			pc.maxPolarAngle = Math.PI * 0.495;
+			pc.minDistance = 1;
+			pc.maxDistance = 40;
+			pc.update();
+			const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+			ortho.up.set(0, 0, -1);
+			ortho.position.set(0, 40, -2.2);
+			ortho.lookAt(0, 0, -2.2);
+			const topState = { cx: 0, cz: -2.2, zoom: 1 };
+			let mode = 'split',
+				topRect = null,
+				perspRect = null;
+
+			function fitOrtho(w, h) {
+				const a = w / h;
+				let halfH = Math.max(7.25, 8.7 / a);
+				const halfW = halfH * a;
+				ortho.left = -halfW;
+				ortho.right = halfW;
+				ortho.top = halfH;
+				ortho.bottom = -halfH;
+				ortho.zoom = topState.zoom;
+				ortho.position.set(topState.cx, 40, topState.cz);
+				ortho.lookAt(topState.cx, 0, topState.cz);
+				ortho.updateProjectionMatrix();
+				return { halfW, halfH };
+			}
+			function inRect(r, x, y) {
+				return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+			}
+			let drag = null;
+			view.addEventListener(
+				'pointerdown',
+				(e) => {
+					const b = view.getBoundingClientRect(),
+						x = e.clientX - b.left,
+						y = e.clientY - b.top;
+					const onTop = inRect(topRect, x, y);
+					pc.enabled = !onTop && mode !== 'top';
+					if (onTop) {
+						drag = { x: e.clientX, y: e.clientY };
+						view.setPointerCapture(e.pointerId);
+					}
+				},
+				true,
+			);
+			view.addEventListener('pointermove', (e) => {
+				if (!drag || !topRect) return;
+				const { halfW } = fitOrtho(topRect.w, topRect.h);
+				const s = (2 * halfW) / topState.zoom / topRect.w;
+				topState.cx -= (e.clientX - drag.x) * s;
+				topState.cz -= (e.clientY - drag.y) * s;
+				drag = { x: e.clientX, y: e.clientY };
+			});
+			const endDrag = () => {
+				drag = null;
+			};
+			view.addEventListener('pointerup', endDrag);
+			view.addEventListener('pointercancel', endDrag);
+			view.addEventListener(
+				'wheel',
+				(e) => {
+					const b = view.getBoundingClientRect();
+					if (!inRect(topRect, e.clientX - b.left, e.clientY - b.top)) return;
+					e.preventDefault();
+					e.stopImmediatePropagation();
+					topState.zoom = Math.min(
+						8,
+						Math.max(0.6, topState.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)),
+					);
+				},
+				{ capture: true, passive: false },
+			);
+
+			const chipA = document.getElementById('chip-a'),
+				chipB = document.getElementById('chip-b'),
+				hint = document.getElementById('hint');
+			function place(chip, r) {
+				if (!r) {
+					chip.hidden = true;
+					return;
+				}
+				chip.hidden = false;
+				chip.style.left = r.x + 10 + 'px';
+				chip.style.top = r.y + 10 + 'px';
+			}
+
+			function render() {
+				const w = view.clientWidth,
+					h = view.clientHeight;
+				renderer.setSize(w, h, false);
+				renderer.setScissorTest(true);
+				const vp = (cam, x, y, ww, hh) => {
+					renderer.setViewport(x, h - y - hh, ww, hh);
+					renderer.setScissor(x, h - y - hh, ww, hh);
+					if (cam === persp) {
+						persp.aspect = ww / hh;
+						persp.updateProjectionMatrix();
+					} else fitOrtho(ww, hh);
+					renderer.render(scene, cam);
+				};
+				perspRect = topRect = null;
+				if (mode === 'persp') {
+					perspRect = { x: 0, y: 0, w, h };
+				} else if (mode === 'top') {
+					topRect = { x: 0, y: 0, w, h };
+				} else if (w >= h * 1.15) {
+					perspRect = { x: 0, y: 0, w: Math.floor(w / 2) - 1, h };
+					topRect = {
+						x: Math.floor(w / 2) + 1,
+						y: 0,
+						w: w - Math.floor(w / 2) - 1,
+						h,
+					};
+				} else {
+					perspRect = { x: 0, y: 0, w, h: Math.floor(h / 2) - 1 };
+					topRect = {
+						x: 0,
+						y: Math.floor(h / 2) + 1,
+						w,
+						h: h - Math.floor(h / 2) - 1,
+					};
+				}
+				renderer.setClearColor(0x16212c);
+				renderer.setScissor(0, 0, w, h);
+				renderer.setViewport(0, 0, w, h);
+				renderer.clear();
+				if (perspRect)
+					vp(persp, perspRect.x, perspRect.y, perspRect.w, perspRect.h);
+				if (topRect) vp(ortho, topRect.x, topRect.y, topRect.w, topRect.h);
+				place(chipA, perspRect);
+				place(chipB, topRect);
+				hint.textContent =
+					mode === 'top'
+						? 'тянуть — сдвиг · колесо — масштаб'
+						: mode === 'persp'
+							? 'тянуть — вращать · колесо — масштаб'
+							: 'слева/сверху — вращать · вид сверху — сдвиг и масштаб';
+			}
+
+			/* ---------- UI ---------- */
+			const reduce = window.matchMedia(
+				'(prefers-reduced-motion: reduce)',
+			).matches;
+			function setMode(m) {
+				mode = m;
+				for (const k of ['persp', 'top', 'split'])
+					document
+						.getElementById('v-' + k)
+						.setAttribute('aria-pressed', String(k === m));
+				pc.enabled = m !== 'top';
+			}
+			for (const k of ['persp', 'top', 'split'])
+				document
+					.getElementById('v-' + k)
+					.addEventListener('click', () => setMode(k));
+			const tgl = { labels, rays, cables, dims };
+			for (const k in tgl) {
+				const b = document.getElementById('t-' + k);
+				b.addEventListener('click', () => {
+					const on = b.getAttribute('aria-pressed') !== 'true';
+					b.setAttribute('aria-pressed', String(on));
+					tgl[k].visible = on;
+				});
+			}
+			document.getElementById('devlist').innerHTML = DEV.map(
+				(D) => `
+  <div class="dev"><span class="dot" style="background:${HEX(COL[D.kind])}"></span><b>${D.name}</b><span class="L">${D.L.toFixed(2)} м</span>
+  <span class="m">${D.sub}<br>x ${D.x.toFixed(1)} · d ${(-D.z).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · стол ${D.h.toFixed(2)} м</span></div>`,
+			).join('');
+			document.getElementById('legend').innerHTML = Object.values(CAB)
+				.map(
+					(c) => `<i style="background:${HEX(c.c)}"></i><span>${c.name}</span>`,
+				)
+				.join('');
+
+			const clock = new THREE.Clock();
+			let t = 0;
+			function loop() {
+				if (!reduce) t += clock.getDelta();
+				tickStreams(t);
+				pc.update();
+				render();
+				requestAnimationFrame(loop);
+			}
+			tickStreams(0.3);
+			loop();
+			Promise.all(assetJobs).then(() => {
+				if (assetErrors.size) {
+					assetStatus.textContent =
+						location.protocol === 'file:'
+							? 'Для загрузки моделей откройте страницу через локальный HTTP-сервер.'
+							: 'Не удалось загрузить часть ресурсов — показаны упрощённые объекты.';
+					assetStatus.title = [...assetErrors].join('\n');
+				} else {
+					assetStatus.textContent = 'Модели и текстуры загружены';
+					setTimeout(() => assetStatus.remove(), 3000);
+				}
+			});
+		</script>
+	</body>
+</html>
