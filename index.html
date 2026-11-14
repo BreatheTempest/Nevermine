@@ -494,7 +494,7 @@
 			// Shared finishes for both stand models, mapped by their authored material names.
 			const standFinishes = {
 				glass: new THREE.MeshPhysicalMaterial({name:'Stand frosted glass', color:0xf5f9fc, metalness:0, roughness:0.16, transmission:0.92, thickness:0.018, ior:1.45, side:THREE.DoubleSide}),
-				aluminum: new THREE.MeshStandardMaterial({name:'Stand aluminum', color:0xf0f3f6, metalness:0.85, roughness:0.12}),
+				aluminum: new THREE.MeshStandardMaterial({name:'Stand aluminum', color:0xffffff, metalness:0.85, roughness:0.055}),
 				plastic: new THREE.MeshStandardMaterial({name:'Stand dark plastic', color:0x202226, metalness:0, roughness:0.72}),
 			};
 			function standFinish(material){
@@ -1004,7 +1004,7 @@
 			const generatorHeight = 0.45434033847448757 * generatorScale;
 			// All equipment shares a 10 m floor-plan radius centered on the mine.
             const targetDistance = 10;
-            const layoutDistanceScale = 0.75; // Compress spacing only; keep equipment proportions.
+            const layoutDistanceScale = 0.675; // Compress spacing only; keep equipment proportions.
             const GEN = { x: 0, z: TZ + targetDistance * layoutDistanceScale, w: 0.88, d: 0.88, h: 0.9716459214687347 * STAND_SCALE };
 			document.getElementById('wall-distance').textContent = [GEN.z-(WZ+0.175), GEN.z-(WZ-0.175)].map(d=>(d/layoutDistanceScale).toFixed(2).replace('.', ',')).join('–') + ' м от miniGen';
             const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
@@ -1328,44 +1328,6 @@
 				];
 			const total = nodes.reduce((a, n) => a + n.cab.length, 0);
 			let gi = 0;
-			// floor cable protector along trunk
-			const trayM = M(0x2e3339, 0.7, 0.1);
-			const yb = M(0xf0c419, 0.6, 0);
-			const xMin = Math.min(...nodes.map((n) => n.x)) - 0.3;
-			cables.add(
-				B(
-					XT - xMin + 0.3,
-					0.012,
-					0.52,
-					trayM,
-					(XT + xMin) / 2 + 0.15,
-					0.006,
-					ZT,
-				),
-			);
-			cables.add(
-				B(0.52, 0.012, ZT - RK.z + 0.3, trayM, XT, 0.006, (ZT + RK.z) / 2),
-			);
-			cables.add(
-				B(
-					XT - xMin + 0.3,
-					0.014,
-					0.03,
-					yb,
-					(XT + xMin) / 2 + 0.15,
-					0.007,
-					ZT + 0.275,
-				),
-				B(
-					XT - xMin + 0.3,
-					0.014,
-					0.03,
-					yb,
-					(XT + xMin) / 2 + 0.15,
-					0.007,
-					ZT - 0.275,
-				),
-			);
 			for (const n of nodes) {
 				n.cab.forEach((k, j) => {
 					const o = (j - (n.cab.length - 1) / 2) * 0.03,
@@ -1527,6 +1489,8 @@
 			// Longitudinal arrows indicate the 1–10 m range toward the mines.
 			const sourceMark=V(0,0,GEN.z-0.3),targetMark=V(0,0,WZ+0.23);
 			floorArrow(sourceMark,targetMark);
+            // Use the visible distance-arrow scale, including its equipment clearances.
+            const floorTravelSpan = sourceMark.distanceTo(targetMark) * lateralTravel / targetDistance;
 			inkText('L ≈ 1–10 м',-0.3,(sourceMark.z+targetMark.z)/2,Math.PI/2);
 			for(const side of [-1,1]){
 				const start=V(side*(detectorStandX-0.35),0,detectorStandZ-0.1),end=V(side*0.48,0,WZ+0.23);
@@ -1545,8 +1509,8 @@
 				const mid=(base+aim)/2;
 				inkText('α',start.x+0.47*Math.cos(mid),start.z+0.47*Math.sin(mid),0,0.3);
 				// Horizontal arrows indicate allowable lateral travel, not target distance.
-                floorArrow(V(0,0,GEN.z+0.65),V(side*lateralTravel*layoutDistanceScale,0,GEN.z+0.65));
-				inkText(`${lateralTravel} м`,side*lateralTravel*layoutDistanceScale/2,GEN.z+0.4);
+                floorArrow(V(0,0,GEN.z+0.65),V(side*floorTravelSpan,0,GEN.z+0.65));
+				inkText(`${lateralTravel} м`,side*floorTravelSpan/2,GEN.z+0.4);
 			}
 
 			// Compact presentation without changing the metric layout or object proportions.
