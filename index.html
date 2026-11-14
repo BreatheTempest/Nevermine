@@ -506,7 +506,8 @@
 							throw new Error('Empty model bounds');
 						const wrapper = new THREE.Group();
 						wrapper.add(oriented);
-						wrapper.scale.set(
+						if (typeof size === 'number') wrapper.scale.setScalar(size);
+						else wrapper.scale.set(
 							size[0] / extent.x,
 							size[1] / extent.y,
 							size[2] / extent.z,
@@ -1035,7 +1036,7 @@
 
 			/* ---------- miniGen on its cart ---------- */
 			const GEN = { x: 0, z: 0, w: 0.6, d: 0.5, h: 0.75 };
-			const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_3_shelves.glb');
+			const genCart = cart(GEN.w, GEN.d, GEN.h, 'stand_2_shelves.glb');
 			genCart.position.set(GEN.x, 0, GEN.z);
 			scene.add(genCart);
 			genCart.add(
@@ -1133,19 +1134,24 @@
 				beam: 0xe3a21a,
 			};
 			const HEX = (n) => '#' + n.toString(16).padStart(6, '0');
+			// Shelf tops measured from stand_3_shelves.glb, relative to its lowest wheel.
+			const shelfHeights = [0.332713, 0.981970, 1.631227];
+			const detectorScale = 0.7;
+			const detectorHeight = 0.56056505208835 * detectorScale;
+			const detectorDepth = 0.39439132809638977 * detectorScale;
+			for (const x of [-5, 5]) {
+				const stand = new THREE.Group();
+				stand.position.set(x, 0, 0);scene.add(stand);
+				for (const y of shelfHeights) stand.add(B(0.75, 0.025, 0.75, deck, 0, y-0.0125, 0));
+				for (const sx of [-1,1]) for (const sz of [-1,1]) stand.add(C(0.018, 1.63, steel, sx*0.36, 0.815, sz*0.36));
+				projectModel(stand, 'stand_3_shelves.glb', 1, [0, 0.8161577731370926, 0], -2*Math.atan2(0.9699319005012512, 0.24337689578533173));
+			}
 			const DEV = [
 				{
 					id: 'g1',
 					kind: 'gamma',
 					name: 'Гамма · LaBr₃(Ce) 3″×3″',
 					sub: 'сцинтиллятор + свинцовый коллиматор',
-					x: -5,
-					z: 0,
-					w: 0.55,
-					d: 0.45,
-					h: 0.72,
-					mast: 0.24,
-					head: headLaBr,
 					cab: ['sig', 'hv'],
 				},
 				{
@@ -1153,13 +1159,6 @@
 					kind: 'gamma',
 					name: 'Гамма · HPGe',
 					sub: 'коакс. Ge, электроохлаждение',
-					x: 5,
-					z: 0,
-					w: 0.6,
-					d: 0.55,
-					h: 0.68,
-					mast: 0.28,
-					head: headHPGe,
 					cab: ['sig', 'hv', 'pwr'],
 				},
 				{
@@ -1167,13 +1166,6 @@
 					kind: 'neutron',
 					name: 'Нейтроны · ³He ×3 в HDPE',
 					sub: 'тепловые / надтепловые',
-					x: -3.5,
-					z: -2.5,
-					w: 0.55,
-					d: 0.6,
-					h: 0.6,
-					mast: 0.18,
-					head: headHe3,
 					cab: ['sig', 'hv'],
 				},
 				{
@@ -1181,13 +1173,6 @@
 					kind: 'neutron',
 					name: 'Нейтроны · EJ‑309 5″×5″',
 					sub: 'быстрые, n/γ‑дискриминация',
-					x: 3.5,
-					z: -2.5,
-					w: 0.5,
-					d: 0.45,
-					h: 0.72,
-					mast: 0.24,
-					head: headEJ,
 					cab: ['sig', 'hv'],
 				},
 				{
@@ -1195,13 +1180,6 @@
 					kind: 'xray',
 					name: 'Рентген · CdTe',
 					sub: 'Amptek X‑123, W‑коллиматор',
-					x: -1.6,
-					z: -6.0,
-					w: 0.45,
-					d: 0.4,
-					h: 0.3,
-					mast: 0.12,
-					head: () => headXray(0x2f3a45),
 					cab: ['eth', 'pwr'],
 				},
 				{
@@ -1209,16 +1187,13 @@
 					kind: 'xray',
 					name: 'Рентген · SDD',
 					sub: 'Amptek FAST SDD',
-					x: 1.6,
-					z: -6.0,
-					w: 0.45,
-					d: 0.4,
-					h: 0.3,
-					mast: 0.12,
-					head: () => headXray(0x4a2f66),
 					cab: ['eth', 'pwr'],
 				},
 			];
+			DEV.forEach((D, i) => {
+				D.shelf = Math.floor(i / 2);
+				Object.assign(D, {x: i % 2 ? 5 : -5, z: 0, w: 0.82, d: 0.82, h: shelfHeights[D.shelf]});
+			});
 			const CAB = {
 				sig: { c: 0xe8b923, name: 'Сигнал детектора → оцифровщик', y: 1.42 },
 				hv: {
@@ -1240,38 +1215,20 @@
 			};
 
 			for (const D of DEV) {
-				const ct = cart(D.w, D.d, D.h);
-				ct.position.set(D.x, 0, D.z);
-				scene.add(ct);
-				ct.add(C(0.02, D.mast, steel, 0, D.h + 0.015 + D.mast / 2, 0, 14));
 				const pivot = new THREE.Group();
-				pivot.position.set(D.x, D.h + 0.015 + D.mast, D.z);
+				pivot.position.set(D.x, D.h + detectorHeight/2, D.z);
 				scene.add(pivot);
-				const h = D.head();
-				const headBounds = new THREE.Box3().setFromObject(h.g),
-					headSize = headBounds.getSize(new THREE.Vector3());
-				projectModel(
-					h.g,
-					'detector.glb',
-					headSize.toArray(),
-					headBounds.getCenter(new THREE.Vector3()).toArray(),
-					Math.PI,
-				);
-				const tilt = new THREE.Group();
-				tilt.add(h.g);
-				pivot.add(tilt);
-				const dx = T.x - D.x,
-					dz = T.z - D.z,
-					dy = T.y - pivot.position.y;
-				pivot.rotation.y = Math.atan2(dx, dz);
-				tilt.rotation.x = Math.atan2(-dy, Math.hypot(dx, dz));
+				pivot.add(B(0.5605651140213013*detectorScale, detectorHeight, detectorDepth, alu, 0, 0, 0));
+				projectModel(pivot, 'detector.glb', detectorScale, [0,0,0], Math.PI);
+				pivot.rotation.y = Math.atan2(T.x-D.x, T.z-D.z);
 				pivot.updateMatrixWorld(true);
-				D.front = tilt.localToWorld(V(0, 0, h.front));
-				D.back = tilt.localToWorld(V(0, 0, h.back));
+				D.front = pivot.localToWorld(V(0, 0, detectorDepth/2));
+				D.back = pivot.localToWorld(V(0, 0, -detectorDepth/2));
 				D.top = D.h;
 				D.pivotY = pivot.position.y;
 				D.L = Math.hypot(D.x - T.x, D.z - T.z);
 				D.alpha = (Math.atan2(Math.abs(D.x - T.x), D.z - T.z) * 180) / Math.PI;
+				if (D.shelf === 0) {
 				const coord = `x ${D.x.toFixed(1).replace('-', '−')} · d ${(-D.z).toFixed(1)} м`;
 				scene.add(
 					floorText(coord, D.x, D.z + D.d / 2 + 0.3, 0.15, '#33485c', 0, 600),
@@ -1297,11 +1254,12 @@
 					new THREE.LineBasicMaterial({ color: COL[D.kind] }),
 				);
 				scene.add(fpl);
+				}
 				const lb = tag(
 					[D.name, `L ${D.L.toFixed(2)} м · α ${D.alpha.toFixed(0)}°`],
 					{ size: 0.17, accent: HEX(COL[D.kind]) },
 				);
-				lb.position.set(D.x, D.pivotY + 0.32, D.z);
+				lb.position.set(D.x + Math.sign(D.x)*0.8, D.pivotY + 0.1, D.z);
 				labels.add(lb);
 			}
 			scene.add(
@@ -1628,7 +1586,7 @@
 				'до стенки 5,43 м',
 				0x6b4f30,
 			);
-			for (const D of DEV.filter((d) => d.kind !== 'xray'))
+			for (const D of DEV.filter((d) => d.shelf === 0))
 				dimLine(
 					V(T.x, fy, T.z),
 					V(D.x, fy, D.z),
@@ -1812,7 +1770,7 @@
 			document.getElementById('devlist').innerHTML = DEV.map(
 				(D) => `
   <div class="dev"><span class="dot" style="background:${HEX(COL[D.kind])}"></span><b>${D.name}</b><span class="L">${D.L.toFixed(2)} м</span>
-  <span class="m">${D.sub}<br>x ${D.x.toFixed(1)} · d ${(-D.z).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · стол ${D.h.toFixed(2)} м</span></div>`,
+  <span class="m">${D.sub}<br>x ${D.x.toFixed(1)} · d ${(-D.z).toFixed(1)} м · α ${D.alpha.toFixed(0)}° · полка ${D.shelf + 1}: ${D.h.toFixed(2)} м</span></div>`,
 			).join('');
 			document.getElementById('legend').innerHTML = Object.values(CAB)
 				.map(
