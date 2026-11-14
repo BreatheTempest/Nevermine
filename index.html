@@ -403,9 +403,9 @@
 						<h2>Стенка перед минами</h2>
 						<dl>
 							<dt>Размер</dt>
-							<dd>1,0 × 1,0 м, толщина 0,35 м</dd>
+							<dd>1,8 × 1,6 м, толщина 0,35 м</dd>
 							<dt>Слои</dt>
-							<dd>6 × 16,7 см, снизу вверх</dd>
+							<dd>3 × 53,3 см, снизу вверх</dd>
 							<dt>Положение</dt>
 							<dd id="wall-distance"></dd>
 						</dl>
@@ -413,17 +413,15 @@
 							<span style="background: #d4bb86"></span
 							><span style="background: #85827b"></span
 							><span style="background: #5b4330"></span>
-							<span style="background: #d4bb86"></span
-							><span style="background: #85827b"></span
-							><span style="background: #5b4330"></span>
+							
 						</div>
 						<p class="note">
-							песок · щебень · грунт · песок · щебень · грунт, в стальной раме с
-							прозрачными боковинами из оргстекла.
+							песок · щебень · грунт, в стальной раме с
+							прозрачным центральным стеклом 1,8 × 1,6 м и центральным окном без засыпки; песок, щебень и грунт находятся только в боковых колоннах.
 						</p>
 					</section>
 					<section>
-						<h2>Цели за стенкой (лоток с песком, 10 м от miniGen)</h2>
+						<h2>Цели за стенкой (двухполочная стойка, 10 м от miniGen)</h2>
 						<dl>
 							<dt>ТМ‑62М</dt>
 							<dd>ПТ мина, Ø320 мм, 7,5 кг ТНТ</dd>
@@ -887,60 +885,49 @@
 			}
 
 			/* ---------- geometry of the setup ---------- */
-			const TZ = -6.25,
+			const targetShelfY = 0.9716459214687347 * STAND_SCALE;
+            const TZ = -6.25,
 				WZ = -5.6,
-				T = V(0, 0.2, TZ);
+				T = V(0, targetShelfY + 0.163, TZ);
 
-			/* soil wall 1x1x0.35 */
-			const wall = new THREE.Group();
-			scene.add(wall);
-			const lmat = [sandTex, gravelTex, soilTex].map((t) =>
-				M(0xffffff, 0.95, 0, { map: t }),
-			);
-			const LH = 1 / 6;
-			for (let i = 0; i < 6; i++)
-				wall.add(
-					B(1.0, LH - 0.002, 0.35, lmat[i % 3], 0, 0.025 + LH / 2 + i * LH, WZ),
-				);
-			const frameM = M(0x4c5660, 0.45, 0.6);
-			for (const sx of [-1, 1])
-				for (const sz of [-1, 1])
-					wall.add(
-						B(0.04, 1.07, 0.04, frameM, sx * 0.52, 0.535, WZ + sz * 0.195),
-					);
-			for (const y of [0.0125, 1.04])
-				for (const sz of [-1, 1])
-					wall.add(B(1.08, 0.025, 0.04, frameM, 0, y, WZ + sz * 0.195));
-			for (const sx of [-1, 1]) {
-				const p = B(
-					0.004,
-					1.0,
-					0.35,
-					M(0xcfe6f2, 0.1, 0, { transparent: true, opacity: 0.18 }),
-					sx * 0.502,
-					0.525,
-					WZ,
-				);
-				p.castShadow = false;
-				wall.add(p);
-			}
-			for (const sx of [-1, 1])
-				wall.add(B(0.08, 0.02, 0.6, frameM, sx * 0.52, 0.01, WZ));
+            /* Clear central viewing window with layered soil columns at the sides. */
+            const wallWidth = 1.8;
+            const glassHeight = 1.6;
+            const wall = new THREE.Group();
+            scene.add(wall);
+            const lmat = [sandTex, gravelTex, soilTex].map(t => M(0xffffff, 0.95, 0, {map:t}));
+            const LH = glassHeight / 3;
+            const sideColumnWidth = 0.25;
+            for(let i=0;i<3;i++) for(const side of [-1,1])
+                wall.add(B(sideColumnWidth,LH-0.002,0.35,lmat[i%3],side*(wallWidth-sideColumnWidth)/2,0.025+LH/2+i*LH,WZ));
+            const frameM = M(0x4c5660,0.45,0.6);
+            const frameX = wallWidth/2+0.02;
+            for(const sx of [-1,1]) for(const sz of [-1,1])
+                wall.add(B(0.04,glassHeight+0.07,0.04,frameM,sx*frameX,(glassHeight+0.07)/2,WZ+sz*0.195));
+            for(const y of [0.0125,glassHeight+0.04]) for(const sz of [-1,1])
+                wall.add(B(wallWidth+0.08,0.025,0.04,frameM,0,y,WZ+sz*0.195));
+            // +Z faces the equipment; no soil or backing obstructs the 1.3 m central window.
+            const wallGlass = new THREE.MeshPhysicalMaterial({
+                color:0xf0f8fc,metalness:0,roughness:0.08,transmission:0.94,
+                thickness:0.008,ior:1.45,side:THREE.DoubleSide
+            });
+            const frontPane = B(wallWidth,glassHeight,0.008,wallGlass,0,0.025+glassHeight/2,WZ+0.183);
+            frontPane.castShadow=false;wall.add(frontPane);
+            for(const sx of [-1,1]) wall.add(B(0.08,0.02,0.6,frameM,sx*frameX,0.01,WZ));
 
-			/* sand tray with mines and explosives */
-			const tray = new THREE.Group();
-			scene.add(tray);
-			const wood = M(0x9c7650, 0.75, 0);
-			tray.add(
-				B(1.1, 0.12, 0.04, wood, 0, 0.06, TZ + 0.38),
-				B(1.1, 0.12, 0.04, wood, 0, 0.06, TZ - 0.38),
-				B(0.04, 0.12, 0.8, wood, 0.53, 0.06, TZ),
-				B(0.04, 0.12, 0.8, wood, -0.53, 0.06, TZ),
-			);
-			tray.add(
-				B(1.02, 0.1, 0.72, M(0xffffff, 0.95, 0, { map: sandTex }), 0, 0.05, TZ),
-			);
-			const Y0 = 0.1;
+            /* Targets on the top shelf, aligned with the clear viewing window. */
+            const targetStand = cart(0.88,0.88,0.9716459214687347*STAND_SCALE,'stand_2_shelves.glb');
+            targetStand.position.set(0,0,TZ);scene.add(targetStand);
+            const tray = new THREE.Group();scene.add(tray);
+            const Y0 = targetShelfY;
+            function uprightMine(group, originalCenter, x, radius) {
+                const pivot = new THREE.Group();
+                pivot.position.set(x,Y0+radius,TZ);
+                pivot.rotation.x = Math.PI/2; // Local +Y top face points toward equipment at +Z.
+                group.position.copy(originalCenter).negate();
+                pivot.add(group);tray.add(pivot);
+                return pivot;
+            }
 			// TM-62M
 			const mine = new THREE.Group();
 			tray.add(mine);
@@ -960,15 +947,17 @@
 				[0.326, 0.142, 0.326],
 				[0, Y0 + 0.071, TZ],
 			);
-			// PMN-2
+			uprightMine(mine,V(0,Y0+0.071,TZ),-0.18,0.163);
+            // PMN-2
+            const pmn = new THREE.Group();
 			const pmnX = -0.33,
 				pmnZ = TZ + 0.18;
-			tray.add(C(0.0605, 0.054, oliveP, pmnX, Y0 + 0.027, pmnZ, 32));
-			tray.add(
+			pmn.add(C(0.0605, 0.054, oliveP, pmnX, Y0 + 0.027, pmnZ, 32));
+			pmn.add(
 				B(0.1, 0.008, 0.022, rubber, pmnX, Y0 + 0.058, pmnZ),
 				B(0.022, 0.008, 0.1, rubber, pmnX, Y0 + 0.058, pmnZ),
 			);
-			tray.add(
+			pmn.add(
 				B(
 					0.02,
 					0.02,
@@ -979,7 +968,8 @@
 					pmnZ,
 				),
 			);
-			// TNT 400 g blocks
+			uprightMine(pmn,V(pmnX,Y0+0.031,pmnZ),0.15,0.0605);
+            // TNT 400 g blocks
 			const tntM = M(0xc9a96a, 0.85, 0);
 			tray.add(
 				B(0.1, 0.05, 0.05, tntM, 0.33, Y0 + 0.025, TZ + 0.2),
@@ -993,7 +983,7 @@
 					0.025,
 					0.051,
 					M(0x5d6748, 0.4, 0.15),
-					0.3,
+					0.15,
 					Y0 + 0.0125,
 					TZ - 0.2,
 				),
@@ -1448,18 +1438,18 @@
 				labels.add(l);
 			}
 			{
-				const l = tag(['Стенка 1×1×0,35 м', 'песок · щебень · грунт ×2'], {
+				const l = tag(['Стенка 1,8×1,6×0,35 м', 'стекло 1,8 м · грунт только по бокам'], {
 					size: 0.15,
 					accent: '#8a6a45',
 				});
-				l.position.set(-1.05, 1.1, WZ);
+				l.position.set(-1.05, glassHeight+0.1, WZ);
 				labels.add(l);
 			}
 			const mineTags = [
-				['ТМ‑62М', 0, 0.3, TZ],
-				['ПМН‑2', pmnX, 0.2, pmnZ],
-				['ТНТ 2×400 г', 0.36, 0.24, TZ + 0.2],
-				['C‑4 M112', 0.32, 0.18, TZ - 0.22],
+				['ТМ‑62М', -0.18, Y0+0.36, TZ],
+				['ПМН‑2', 0.15, Y0+0.15, TZ],
+				['ТНТ 2×400 г', 0.33, Y0+0.14, TZ + 0.2],
+				['C‑4 M112', 0.15, Y0+0.07, TZ - 0.22],
 			];
 			for (const [t, x, y, z] of mineTags) {
 				const l = tag([t], { size: 0.085, accent: '#4d5a3a' });
