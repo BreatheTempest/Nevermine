@@ -10,7 +10,7 @@ viewport.prepend(renderer.domElement);renderer.domElement.setAttribute('aria-lab
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x91a28a);scene.fog=new THREE.Fog(0x91a28a,42,95);
 const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();scene.environment=pmrem.fromScene(room,.04).texture;room.dispose();pmrem.dispose();
 scene.add(new THREE.HemisphereLight(0xe5eee0,0x495234,1.2));const sun=new THREE.DirectionalLight(0xffecd1,2);sun.position.set(-12,24,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,near:1,far:60});sun.shadow.bias=-.0005;scene.add(sun);
-const camera=new THREE.PerspectiveCamera(43,1,.1,150),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.47;controls.minDistance=5;controls.maxDistance=85;
+const camera=new THREE.PerspectiveCamera(43,1,.1,150),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enabled=false;controls.maxPolarAngle=Math.PI*.47;controls.minDistance=5;controls.maxDistance=85;
 let follow=false;function resetCamera(){follow=false;$('follow').setAttribute('aria-pressed','false');const start=poseAt(0),mobile=camera.aspect<1,framing=mobile?Math.max(1,.8/camera.aspect):1;
 const behind=(mobile?16:12.2)*framing;
 camera.position.set(start.x-Math.sin(start.yaw)*behind,(mobile?25:19.2)*framing,start.z-Math.cos(start.yaw)*behind);controls.target.set(0,0,0);controls.update();}resetCamera();
@@ -50,7 +50,10 @@ const scanDisk=mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({
 const scanRing=mesh(new THREE.RingGeometry(.98,1,64),new THREE.MeshBasicMaterial({color:0xffdc78,transparent:true,opacity:.75,side:THREE.DoubleSide,depthWrite:false}),scene);scanRing.rotation.x=-Math.PI/2;scanRing.castShadow=false;
 const particlePositions=new Float32Array(TARGETS.length*24*3),particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));const particles=new THREE.Points(particleGeometry,new THREE.PointsMaterial({color:0xff8265,size:.12,transparent:true,opacity:.95,depthWrite:false}));particles.frustumCulled=false;scene.add(particles);
 let time=0,playing=false,altitude=3.2,radius=1.5,speed=1,times=detectionTimes(radius),previousPose=poseAt(0);let lastTick=performance.now();
-function setPlaying(value){playing=value;$('play').textContent=playing?'Pause survey':time>=DURATION?'Replay survey':'Play survey';$('play').setAttribute('aria-pressed',String(playing));}
+let sceneReady=false,hasStarted=false;
+function dismissEntry(){if(hasStarted)return;hasStarted=true;$('entry-overlay').hidden=true;$('survey-controls').inert=false;$('view-actions').inert=false;$('status').hidden=false;controls.enabled=true;}
+$('start-survey').onclick=()=>{if(!sceneReady)return;dismissEntry();setPlaying(true);$('play').focus({preventScroll:true});};
+function setPlaying(value){if(value&&!sceneReady)return;if(value)dismissEntry();playing=value;$('play').textContent=playing?'Pause survey':time>=DURATION?'Replay survey':'Play survey';$('play').setAttribute('aria-pressed',String(playing));}
 $('play').onclick=()=>{if(time>=DURATION)time=0;setPlaying(!playing);};$('restart').onclick=()=>{time=0;setPlaying(false);updateScene();};$('timeline').addEventListener('input',e=>{time=Number(e.target.value);if(time>=DURATION||!playing)setPlaying(false);updateScene();});$('speed').onchange=e=>speed=Number(e.target.value);
 $('altitude').oninput=e=>{altitude=Number(e.target.value);$('altitude-value').textContent=altitude.toFixed(1)+' m';updateScene();};$('scan').oninput=e=>{radius=Number(e.target.value)/2;times=detectionTimes(radius);$('scan-value').textContent=(radius*2).toFixed(1)+' m';updateScene();};
 $('reset-view').onclick=resetCamera;$('follow').onclick=()=>{follow=!follow;$('follow').setAttribute('aria-pressed',String(follow));if(follow){const p=poseAt(time/DURATION);camera.position.set(p.x+5,altitude+6,p.z+7);controls.target.set(p.x,altitude*.35,p.z);}};controls.addEventListener('start',()=>{follow=false;$('follow').setAttribute('aria-pressed','false');});
@@ -69,4 +72,12 @@ function updateScene(){const p=poseAt(time/DURATION),found=foundAt(time,times);i
 }
 new ResizeObserver(()=>{const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();resetCamera();}).observe(viewport);
 updateScene();function loop(now){const delta=Math.min((now-lastTick)/1000,.1);lastTick=now;if(playing){time=Math.min(DURATION,time+delta*speed);if(time>=DURATION)setPlaying(false);}rotors.forEach((r,i)=>r.rotation.y+=(i%2?1:-1)*delta*(playing?45:8));updateScene();controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);}requestAnimationFrame(loop);
-await Promise.all(jobs);if(assetErrors.length)$('status').textContent='Some models could not load; simplified equipment is shown.';for(const id of ['play','restart','timeline'])$(id).disabled=false;
+await Promise.all(jobs);
+sceneReady=true;
+if(assetErrors.length)$('status').textContent='Some models could not load; simplified equipment is shown.';
+for(const id of ['play','restart','timeline'])$(id).disabled=false;
+$('entry-overlay').setAttribute('aria-busy','false');
+$('loading-spinner').hidden=true;
+$('entry-title').textContent='Ready for takeoff';
+$('entry-description').textContent=assetErrors.length?'The field is ready with simplified equipment. Start the survey to scan for hidden targets.':'Follow the drone as it scans the field and locates hidden targets.';
+$('start-survey').hidden=false;$('start-survey').disabled=false;
